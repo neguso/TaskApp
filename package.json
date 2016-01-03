@@ -1,0 +1,20 @@
+{
+  "name": "taskapp",
+  "version": "0.0.1",
+	"private": true,
+  "description": "Project, time and collaboration management service",
+  "main": "app.js",
+  "scripts": {
+		"start": "app.js",
+    "test": "node test.js"
+  },
+  "author": "Ovidiu Negus (neguso@hotmail.com)",
+  "license": "ISC",
+  "dependencies": {
+    "express": "latest",
+    "mongoose": "latest",
+    "redis": "latest",
+    "restify": "latest",
+    "socket.io": "latest"
+  }
+}

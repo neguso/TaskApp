@@ -1,0 +1,23 @@
+<html>
+	<head>
+		<script src="http://localhost:8002/socket.io/socket.io.js"></script>
+	</head>
+	<body>
+		<h1>Works!</h1>
+		<button id="but">subscribe </button>
+		
+		<script>
+			var socket = io('http://localhost:8002');
+			socket.on('project', function (data) {
+				console.log(data);
+			});
+
+			var but = document.getElementById('but');
+			but.addEventListener('click', function()
+			{
+				socket.emit('subscribe', 'i want to be notified when specific project changes');
+			});
+						
+		</script>
+	</body>
+</html>
