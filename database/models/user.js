@@ -62,8 +62,7 @@ module.exports = function(connection)
 
 function onremove(connection, ids, callback)
 {
-	var 
-	_onremove(connection, ids, callback, );
+
 }
 
 function _onremove(connection, ids, callback)
