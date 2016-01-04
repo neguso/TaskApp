@@ -23,7 +23,10 @@ module.exports = function(connection)
 
 	userSchema.pre('remove', function(next) {
 		
-		onremove(connection, [this.id], (err, ) => {
+		xxxxxx onremote trebuie apelata cu callback, de testat cum transmit eroarea mai sus
+		onremove(connection, [this.id], (err) => {
+			if(err) return next(new Error(err));
+			
 			
 		});
 		
@@ -60,28 +63,31 @@ module.exports = function(connection)
 	return connection.model('User', userSchema);
 };
 
+
 function onremove(connection, ids, callback)
 {
+	var ary = new Array(ids.length);
+	for(let i = 0; i < ids.length; i++)
+	{
+		((id) => {
+			
+			ary[i] = new Promise((resolve, reject) => {
+			
+				connection.model('OrganizationUserLink').remove({ user: id }, (err, info) => {
+					if(err) return reject(err);
 
-}
+					resolve(info.result.n);
+				});
 
-function _onremove(connection, ids, callback)
-{
-	var id = ids.pop();
-
-	// count related documents
-	connection.model('RelatedRestrict').count({ user: id }, (err, count) => {
-		//if(err) ?
-
-		if(count === 0)
-		{
-			connection.model('RelatedCascade').remove({}, (err, info) => {
-				??????
 			});
-		}
-
-		if(ids.length > 0)
-			onremove(connection, ids, callback);
+			
+		})(ids[i]);
+		
+	}
+	
+	Promise.all(ary).then((results) => {
+		callback(null, results);
+	}, (err) => {
+		callback(err);
 	});
 }
-

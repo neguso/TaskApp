@@ -12,7 +12,10 @@ function Database(configuration)
 
 	this.connection = mongoose.createConnection();
 	
+	this.journal = require('./models/journal.js')(this.connection);
+	this.organizations = require('./models/organization.js')(this.connection);
 	this.users = require('./models/user.js')(this.connection);
+	this.organizationuserlinks = require('./models/organizationuserlink.js')(this.connection);
 	//...
 	
 	// setup logging

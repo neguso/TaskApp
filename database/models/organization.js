@@ -69,37 +69,53 @@ module.exports = function(connection)
 
 function onremove(connection, ids, callback)
 {
-	var counts = [];
-	_onremove(connection, ids.slice(), callback, counts);
-}
-
-function _onremove(connection, ids, callback, counts)
-{
-	var id = ids.pop();
-	
-	// count related documents
-	connection.model('Team').count({ organization: id }, (err, count) => {
-		if(err) return callback(err);
-
-		if(count === 0)
-		{
-			connection.model('OrganizationUserLink').remove({ organization: id }, (err, info) => {
-				if(err) return callback(err);
+	var ary = new Array(ids.length);
+	for(var i = 0; i < ids.length; i++)
+	{
+		((id) => {		
+		
+			ary[i] = new Promise((resolve, reject) => {
 				
-				counts.push(info.result.n);
-				
-				if(ids.length === 0)
-					callback(null, counts.reverse());
-				else
-					onremove(connection, ids, callback);
+				// promise resolve if all dependencies can be deleted
+				Promise.all([
+					new Promise((resolve, reject) => {
+						
+						connection.model('Team').count({ organization: id }, (err, count) => {
+							if(err) return reject(err);
+							if(count > 0) return reject(count);
+
+							resolve();
+						});
+						
+					})
+				]).then(() => {
+					
+					// cascade deletes
+					Promise.all([
+						new Promise((resolve, reject) => {
+						
+							connection.model('OrganizationUserLink').remove({ organization: id }, (err, info) => {
+								if(err) return reject(err);
+								
+								resolve(info.result.n);
+							});
+						
+						}),
+						new Promise((resolve, reject) => {
+							
+							connection.model('Journal').remove({ entity: id }, (err, info) => {
+								if(err) return reject(err);
+								
+								resolve(info.result.n);
+							});
+							
+						})
+					]).then(() => { resolve(); }, (err) => { reject(err); });
+					
+				}, (err) => {});
+
 			});
-		}
-		else
-		{
-			counts.push(0);
-
-			if(ids.length > 0)
-				onremove(connection, ids, callback);
-		}
-	});
+		
+		})(ids[i]);
+	}
 }
