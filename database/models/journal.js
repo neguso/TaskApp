@@ -12,7 +12,7 @@ module.exports = function(connection)
 		entity: Schema.Types.ObjectId
 	});
 
-	journalSchema.index({ entity: 1 }, { name: 'ix_entity' });
+	journalSchema.index({ timestamp: 1, entity: 1 }, { name: 'ix_timestamp_entity' });
 
 
 	return connection.model('Journal', journalSchema);

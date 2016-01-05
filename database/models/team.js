@@ -9,44 +9,42 @@ var logger = require('../../library/logger.js'),
 
 module.exports = function(connection)
 {
-	var userSchema = new Schema({
-		email: Schema.Types.String,
-		firstname: Schema.Types.String,
-		lastname: Schema.Types.String
+	var teamSchema = new Schema({
+		name: Schema.Types.String,
+		description: Schema.Types.String,
+		access: { type: Schema.Types.String, enum: ['public', 'managed', 'private'] },
+		organization: { type: Schema.Types.ObjectId, ref: 'Organization' },
+		team: { type: Schema.Types.ObjectId, ref: 'Team' },
+		teams: [{ type: Schema.Types.ObjectId, ref: 'Team' }]
 	}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });
 
-	userSchema.virtual('fullname').get(function()
-	{
-		return this.firstname + ' ' + this.lastname;
-	});
+	teamSchema.index({ organization: 1 }, { name: 'ix_organization' });
 
-	userSchema.index({ email: 1 }, { name: 'ix_email', unique: true });
-
-	userSchema.pre('remove', true, function(next, done) {
+	teamSchema.pre('remove', true, function(next, done) {
 		beforeremove(connection, [this.id], (err, result) => {
-			if(err) return done(err);
+			if(err) return done(new Error(err));
 			done();
 		});
 		next();
 	});
-	
-	userSchema.post('remove', function(document) {
+
+	teamSchema.post('remove', function(document) {
 		afterremove(connection, [this.id], (err, result) => {
 			// do nothing here, errors are logged
 		});
 	});
 
-	userSchema.methods.delete = function()
+	teamSchema.methods.delete = function()
 	{
 		this.remove.apply(this, arguments);
 	};
 
-	userSchema.statics.deleteById = function(id, callback)
+	teamSchema.statics.deleteById = function(id, callback)
 	{
 		beforeremove(connection, [id], (err, result) => {
 			if(err) return callback(err);
 			
-			connection.model('User').remove({ _id: id }, (err, info) => {
+			connection.model('Team').remove({ _id: id }, (err, info) => {
 				if(err) return callback(err);
 
 				callback(null, info.result.n);
@@ -55,9 +53,9 @@ module.exports = function(connection)
 		
 	};
 	
-	userSchema.statics.delete = function(criteria, callback)
+	teamSchema.statics.delete = function(criteria, callback)
 	{
-		connection.model('User').find(criteria, '_id', { lean: true }, (err, ids) => {
+		connection.model('Team').find(criteria, '_id', { lean: true }, (err, ids) => {
 			if(err) return callback(err);
 			
 			beforeremove(connection, ids, (err, result) => {
@@ -73,7 +71,7 @@ module.exports = function(connection)
 	};
 
 
-	return connection.model('User', userSchema);
+	return connection.model('Team', teamSchema);
 };
 
 
@@ -83,10 +81,10 @@ function beforeremove(connection, ids, callback)
 	for(let i = 0; i < ids.length; i++)
 	{
 		((id) => {
-
+			
 			ary[i] = new Promise((resolve, reject) => {
 
-				connection.model('OrganizationUserLink').remove({ user: id }, (err, info) => {
+				connection.model('TeamUserLink').remove({ user: id }, (err, info) => {
 					if(err) return reject(err);
 
 					resolve(info.result.n);

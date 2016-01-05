@@ -3,37 +3,41 @@
 var mongoose = require('mongoose'),
 		Schema = mongoose.Schema;
 
-var plugins = require('./plugins.js');
+var logger = require('../../library/logger.js'),
+		plugins = require('./plugins.js');
 
 
 module.exports = function(connection)
 {
 	var organizationSchema = new Schema({
-		name: { type: Schema.Types.String, maxLength: 128 },
-		description: { type: Schema.Types.String, maxLength: 1024 }
+		name: { type: Schema.Types.String },
+		description: { type: Schema.Types.String }
 	}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });
 
 	organizationSchema.index({ name: 1 }, { name: 'ix_name' });
 
-	organizationSchema.pre('remove', function(next) {
-
-		onremove(connection, [this.id], (err, counts) => {
-			if(err) return next(new Error(err));
-			
-			
+	organizationSchema.pre('remove', true, function(next, done) {
+		beforeremove(connection, [this.id], (err, counts) => {
+			if(err) return done(new Error(err));
+			done();
 		});
-
 		next();
 	});
 
+	organizationSchema.post('remove', function(document) {
+		afterremove(connection, [this.id], (err, result) => {
+			// do nothing here, errors are logged
+		});
+	});
+
 	// assign user to organization
-	organizationSchema.methods.assign = function(user, role, cb)
+	organizationSchema.methods.assign = function(user, role, callback)
 	{
 		connection.models('OrganizationUserLink').create({
 			role: role,
 			ogranization: this.id,
 			user: user
-		}, cb);
+		}, callback);
 	};
 
 	organizationSchema.methods.delete = function()
@@ -43,31 +47,40 @@ module.exports = function(connection)
 
 	organizationSchema.statics.deleteById = function(id, callback)
 	{
-		onremove(connection, [id]);
-		connection.model('Organization').remove({ _id: id }, (err, info) => {
-			callback(err, info.result.n);
+		beforeremove(connection, [id], (err, result) => {
+			if(err) return callback(err);
+
+			connection.model('Organization').remove({ _id: id }, (err, info) => {
+				if(err) return callback(err);
+
+				callback(null, info.result.n);
+			});
 		});
 	};
 	
 	organizationSchema.statics.delete = function(criteria, callback)
 	{
 		connection.model('Organization').find(criteria, '_id', { lean: true }, (err, ids) => {
-			if(err) return callback(err, null);
-			onremove(connection, ids);
-			connection.model('Organization').remove(criteria, (err, info) => {
-				if(err) return callback(err, null);
-					
-				callback(null, info.result.n);
+			if(err) return callback(err);
+
+			beforeremove(connection, ids, (err, result) => {
+				if(err) return callback(err);
+
+				connection.model('Organization').remove(criteria, (err, info) => {
+					if(err) return callback(err);
+						
+					callback(null, info.result.n);
+				});
 			});
 		});
 	};
 
-	
-	return mongoose.model('Organization', organizationSchema);
+
+	return connection.model('Organization', organizationSchema);
 };
 
 
-function onremove(connection, ids, callback)
+function beforeremove(connection, ids, callback)
 {
 	var ary = new Array(ids.length);
 	for(var i = 0; i < ids.length; i++)
@@ -89,8 +102,8 @@ function onremove(connection, ids, callback)
 						
 					})
 				]).then(() => {
-					
-					// cascade deletes
+					// there are no dependencies, we can cascade delete
+
 					Promise.all([
 						new Promise((resolve, reject) => {
 						
@@ -112,10 +125,50 @@ function onremove(connection, ids, callback)
 						})
 					]).then(() => { resolve(); }, (err) => { reject(err); });
 					
-				}, (err) => {});
+				}, (err) => {
+					// there are dependenies, we cannot cascade delete
+
+					reject(err); 
+				});
 
 			});
 		
 		})(ids[i]);
 	}
+	
+	Promise.all(ary).then((result) => {
+		callback(null, result);
+	}, (err) => {
+		callback(err);
+	});
+}
+
+function afterremove(connection, ids, callback)
+{
+	var ary = new Array(ids.length);
+	for(let i = 0; i < ids.length; i++)
+	{
+		((id) => {
+
+			ary[i] = new Promise((resolve, reject) => {
+
+			connection.model('Journal').remove({ entity: id }, (err, info) => {
+				if(err)
+				{
+					logger.log('failed to delete journal for entity: %s, reason: %s', id, err.message);
+					resolve(err);
+					return;
+				}
+				resolve(info.result.n);
+			});
+
+			});
+			
+		})(ids[i]);
+		
+	}
+
+	Promise.all(ary).then((result) => {
+		callback(null, result);
+	});
 }

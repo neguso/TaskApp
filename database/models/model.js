@@ -37,5 +37,5 @@ module.exports = function(connection)
 		// this - the model object
 	};
 	
-	return mongoose.model('yyy', xxxSchema);
+	return connection.model('yyy', xxxSchema);
 };
