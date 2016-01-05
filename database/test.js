@@ -73,31 +73,40 @@ database.main.open().then(() => {
 		// using document.delete()
 		database.main.users.create([{ email: 'deletedocument@example1.com', firstname: 'b' }, { email: 'deletedocument@example2.com', firstname: 'b' }], (err, newUsers) => {
 			if(err) return console.log('error creating users');
-			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0] }, { organization: newOrganization.id, user: newUsers[1] }], (err, newLinks) => {
+			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id }, { organization: newOrganization.id, user: newUsers[1].id }], (err, newLinks) => {
 				if(err) return console.log('error creating organization-user links');
-				newUsers[0].delete((err, deletedUser) => {
-					if(err) return console.log('error deleting organization-user links');
+				database.main.journal.create([{ content: 'journal entry b', entity: newUsers[0].id }, { content: 'journal entry b', entity: newUsers[1].id }], () => {
+					if(err) return console.log('error creating journal');
+					newUsers[0].delete((err, deletedUser) => {
+						if(err) return console.log('error deleting organization-user links');
+					});
+					newUsers[1].delete((err, deletedUser) => {
+						if(err) return console.log('error deleting organization-user links');
+					});				
 				});
-				newUsers[1].delete((err, deletedUser) => {
-					if(err) return console.log('error deleting organization-user links');
-				});				
 			});
 		});
 
 		// using model.delete
 		database.main.users.create([{ email: 'deletemodel@example1.com', firstname: 'c' }, { email: 'deletemodel@example2.com', firstname: 'c' }], (err, newUsers) => {
 			if(err) return console.log('error creating users');
-			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0] }, { organization: newOrganization.id, user: newUsers[1] }], (err, newLinks) => {
+			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id }, { organization: newOrganization.id, user: newUsers[1].id }], (err, newLinks) => {
 				if(err) return console.log('error creating organization-user links');
-				database.main.users.delete({ firstname: 'c' }, (err, count) => {
-					if(err) return console.log('error deleting user with criteria');
-					assert(count === 2, 'invalid count');
+				database.main.journal.create([{ content: 'journal entry c', entity: newUsers[0].id }, { content: 'journal entry c', entity: newUsers[1].id }], () => {
+					if(err) return console.log('error creating journal');
+					database.main.users.delete({ firstname: 'c' }, (err, count) => {
+						if(err) return console.log('error deleting user with criteria');
+						assert(count === 2, 'invalid count');
+					});
 				});
 			});
 		});
 	});
-	
-	
+
+
+
+
+
 }, (err) => {
 
 });

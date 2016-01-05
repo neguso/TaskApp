@@ -1,15 +1,18 @@
 'use strict';
 
-var mongoose = require('mongoose');
+var mongoose = require('mongoose'),
+		Schema = mongoose.Schema;
 
-var Schema = mongoose.Schema;
+module.exports = function(connection)
+{
+	var projectuserlinkSchema = new Schema({
+		role: { type: Schema.Types.String, enum: ['admin', 'default'] },
+		project: { type: Schema.Types.ObjectId, ref: 'Project' },
+		user: { type: Schema.Types.ObjectId, ref: 'User' }
+	});
 
-var projectuserlinkSchema = new Schema({
-	role: { type: Schema.Types.String, enum: ['admin', 'default'] },
-	project: { type: Schema.Types.ObjectId, ref: 'Project' },
-	user: { type: Schema.Types.ObjectId, ref: 'User' }
-});
+	projectuserlinkSchema.index({ project: 1, user: 1 }, { name: 'ix_project_user', unique: true });
 
-projectuserlinkSchema.index({ project: 1, user: 1 }, { name: 'ix_project_user', unique: true });
 
-exports.ProjectUserLink = mongoose.model('ProjectUserLink', projectuserlinkSchema);
+	return connection.model('ProjectUserLink', projectuserlinkSchema);
+};

@@ -31,9 +31,7 @@ module.exports = function(connection)
 	});
 	
 	userSchema.post('remove', function(document) {
-		afterremove(connection, [this.id], (err, result) => {
-			// do nothing here, errors are logged
-		});
+		afterremove(connection, [this.id], (err, result) => { /* nothing here, errors are logged */ });
 	});
 
 	userSchema.methods.delete = function()
@@ -50,9 +48,10 @@ module.exports = function(connection)
 				if(err) return callback(err);
 
 				callback(null, info.result.n);
+				
+				afterremove(connection, [id], (err, result) => { /* nothing here, errors are logged */ });
 			});
 		});
-		
 	};
 	
 	userSchema.statics.delete = function(criteria, callback)
@@ -67,6 +66,8 @@ module.exports = function(connection)
 					if(err) return callback(err);
 						
 					callback(null, info.result.n);
+					
+					afterremove(connection, ids, (err, result) => { /* nothing here, errors are logged */ });
 				});
 			});
 		});
@@ -86,16 +87,39 @@ function beforeremove(connection, ids, callback)
 
 			ary[i] = new Promise((resolve, reject) => {
 
-				connection.model('OrganizationUserLink').remove({ user: id }, (err, info) => {
-					if(err) return reject(err);
+				Promise.all([
 
-					resolve(info.result.n);
+					new Promise((resolve, reject) => {
+						connection.model('OrganizationUserLink').remove({ user: id }, (err, info) => {
+							if(err) return reject(err);
+
+							resolve(info.result.n);
+						});
+					}),
+					new Promise((resolve, reject) => {
+						connection.model('TeamUserLink').remove({ user: id }, (err, info) => {
+							if(err) return reject(err);
+
+							resolve(info.result.n);
+						});
+					}),
+					new Promise((resolve, reject) => {
+						connection.model('ProjectUserLink').remove({ user: id }, (err, info) => {
+							if(err) return reject(err);
+
+							resolve(info.result.n);
+						});
+					})
+
+				]).then((result) => {
+					resolve(result);
+				}, (err) => {
+					reject(err);
 				});
 
 			});
-			
+
 		})(ids[i]);
-		
 	}
 
 	Promise.all(ary).then((result) => {
@@ -114,20 +138,21 @@ function afterremove(connection, ids, callback)
 
 			ary[i] = new Promise((resolve, reject) => {
 
-			connection.model('Journal').remove({ entity: id }, (err, info) => {
-				if(err)
-				{
-					logger.log('failed to delete journal for entity: %s, reason: %s', id, err.message);
-					resolve(err);
-					return;
-				}
-				resolve(info.result.n);
-			});
+				connection.model('Journal').remove({ entity: id }, (err, info) => {
+					if(err)
+					{
+						logger.log('failed to delete journal for entity: %s, reason: %s', id, err.message);
+						resolve(err);
+						return;
+					}
+					resolve(info.result.n);
+				});
+				
+				//todo: clear message refference
 
 			});
 			
 		})(ids[i]);
-		
 	}
 
 	Promise.all(ary).then((result) => {

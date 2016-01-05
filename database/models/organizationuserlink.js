@@ -7,7 +7,7 @@ var mongoose = require('mongoose'),
 module.exports = function(connection)
 {
 	var organizationuserlinkSchema = new Schema({
-		timestamp: Schema.Types.Date,
+		timestamp: { type: Schema.Types.Date, default: Date.now },
 		role: { type: Schema.Types.String, enum: ['owner', 'admin', 'member', 'guest'] },
 		organization: { type: Schema.Types.ObjectId, ref: 'Organization' },
 		user: { type: Schema.Types.ObjectId, ref: 'User' }
