@@ -8,7 +8,7 @@ module.exports = function(connection)
 {
 	var journalSchema = new Schema({
 		timestamp: { type: Schema.Types.Date, default: Date.now },
-		content: { type: Schema.Types.String, maxlength: 1024 },
+		content: { type: Schema.Types.String, maxlength: 256 },
 		entity: Schema.Types.ObjectId
 	});
 

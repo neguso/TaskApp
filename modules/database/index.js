@@ -18,7 +18,7 @@ function Database(configuration)
 	this.users = require('./models/user.js')(this.connection);
 	this.teamuserlinks = require('./models/teamuserlink.js')(this.connection);
 	this.organizationuserlinks = require('./models/organizationuserlink.js')(this.connection);
-	//...
+
 
 	// setup logging
 	this.connection.on('open', () =>

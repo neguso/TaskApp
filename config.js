@@ -9,7 +9,8 @@ module.exports = {
 		port: 6379
 	},
 	files: {
-		location: 'storage'
+		server: 'storage',
+		port: 9000
 	},
 	web: {
 		port: 8000,

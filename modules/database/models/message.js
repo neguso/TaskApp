@@ -11,7 +11,7 @@ module.exports = function(connection)
 {
 	var messageSchema = new Schema({
 		timestamp: { type: Schema.Types.Date, default: Date.now },
-		content: { type: Schema.Types.String, maxlength: 1024 },
+		content: { type: Schema.Types.String, maxlength: 512 },
 		message: { type: Schema.Types.ObjectId, ref: 'Message' },
 		user: { type: Schema.Types.ObjectId, ref: 'User' }
 	});
@@ -66,8 +66,7 @@ function afterremove(connection, condition, callback)
 			keys.push(message.files.map((file) => { return file.key; }));
 		});
 		
-		files.delete(keys, (err, count) => {
-			
-		});
+		//todo: find a way to delete attached files
+		//ex: files.delete(keys, (err, count) => { });
 	});
 }

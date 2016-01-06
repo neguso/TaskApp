@@ -50,6 +50,10 @@ valuestore.session.open().then((client) => {
 		});
 	});
 
+
+
+
+
 }, (err) => {
 
 });
