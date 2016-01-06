@@ -3,6 +3,7 @@
 var mongoose = require('mongoose'),
 		Schema = mongoose.Schema;
 
+
 module.exports = function(connection)
 {
 	var projectuserlinkSchema = new Schema({

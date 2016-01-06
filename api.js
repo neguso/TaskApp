@@ -7,7 +7,7 @@ var restify = require('restify');
 var config = require('./config.js'),
 		logger = require('./library/logger.js'),
 		database = require('./database'),
-		session = require('./session.js');
+		valuestore = require('./valuestore');
 
 
 var started = false;
@@ -21,12 +21,12 @@ module.exports = {
 			if(started)
 				return reject(new Error('Cannot start, server is already running.'));
 
-			database.connection().then((mongoose) => {
+			database.open().then((connection) => {
 
-				session.connection().then((client) => {
+				valuestore.open().then((client) => {
 					
 					var app = restify.createServer();
-					setup(mongoose, client, app);
+					setup(connection, client, app);
 					
 					var server = app.listen(config.api.port, function() {
 						started = true;
@@ -57,7 +57,7 @@ module.exports = {
 
 
 // setup routes
-function setup(database, session, server)
+function setup(connection, session, app)
 {
 	//todo
 }

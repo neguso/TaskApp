@@ -39,38 +39,39 @@ Database.prototype.connection = null;
 
 Database.prototype.open = function()
 {
+	var self = this;
 	return new Promise((resolve, reject) => {
 
-		switch(this.connection.readyState)
+		switch(self.connection.readyState)
 		{
 			case 0: // disconnected
-				this.connection.open(this.configuration.server, this.configuration.database, this.configuration.port, (err) => {
+				self.connection.open(self.configuration.server, self.configuration.database, self.configuration.port, (err) => {
 					if(err)
 						return reject(err);
 					
-					resolve(this.connection);
+					resolve(self.connection);
 				});
 				break;
 
 			case 1: // connected
-				resolve(this.connection);
+				resolve(self.connection);
 				break;
 				
 			case 2: // connecting
-				this.connection.once('open', () =>
+				self.connection.once('open', () =>
 				{
-					resolve(this.connection);
+					resolve(self.connection);
 				});
 				break;
 
 			case 3: // disconnecting
-				this.connection.once('close', () =>
+				self.connection.once('close', () =>
 				{
-					this.connection.open(this.configuration.server, this.configuration.database, this.configuration.port, (err) => {
+					self.connection.open(self.configuration.server, self.configuration.database, self.configuration.port, (err) => {
 						if(err)
 							return reject(err);
 						
-						resolve(this.connection);
+						resolve(self.connection);
 					});
 				});
 				break;
@@ -81,33 +82,34 @@ Database.prototype.open = function()
 
 Database.prototype.close = function()
 {
+	var self = this;
 	return new Promise((resolve, reject) => {
 
-		switch(this.connection.readyState)
+		switch(self.connection.readyState)
 		{
 			case 0: // disconnected
-				resolve(this.connection);
+				resolve(self.connection);
 				break;
 
 			case 1: // connected
-				this.connection.close(() => {
-					resolve(this.connection);
+				self.connection.close(() => {
+					resolve(self.connection);
 				});
 				break;
 				
 			case 2: // connecting
-				this.connection.once('open', () =>
+				self.connection.once('open', () =>
 				{
-					this.connection.close(() => {
-						resolve(this.connection);
+					self.connection.close(() => {
+						resolve(self.connection);
 					});
 				});
 				break;
 
 			case 3: // disconnecting
-				this.connection.once('close', () =>
+				self.connection.once('close', () =>
 				{
-					resolve(this.connection);
+					resolve(self.connection);
 				});
 				break;
 		}

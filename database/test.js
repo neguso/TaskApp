@@ -3,7 +3,7 @@
 var assert = require('assert'),
 		database = require('../database');
 
-database.main.open().then(() => {
+database.main.open().then((connection) => {
 
 	/// create new document
 	database.main.users.create({ email: 'john@example.com - ' + Math.floor(Math.random() * 100), firstname: 'John' }, (err, newUser) => {
@@ -40,6 +40,7 @@ database.main.open().then(() => {
 		});
 
 	});
+
 
 	/// remove document using document.delete()
 	database.main.users.create({ email: 'delete@example.com' }, (err, newUser) => {

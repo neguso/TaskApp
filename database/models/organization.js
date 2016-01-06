@@ -129,7 +129,6 @@ function beforeremove(connection, ids, callback)
 					
 				}, (err) => {
 					// there are dependenies, we cannot cascade delete
-
 					reject(err); 
 				});
 
