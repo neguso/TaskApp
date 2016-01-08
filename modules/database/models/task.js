@@ -1,39 +1,165 @@
-﻿var mongoose = require('mongoose');
-var plugins = require('./plugins.js');
+﻿'use strict';
 
-var models = {
-	//Message: require('./message.js').Message,
-	//Activity: require('./activity.js').Activity
+var mongoose = require('mongoose'),
+		Schema = mongoose.Schema;
+
+var logger = require('../../logger'),
+		plugins = require('./plugins.js');
+
+
+module.exports = function(connection)
+{
+	var taskSchema = new Schema({
+		index: Schema.Types.Number,
+		name: Schema.Types.String,
+		description: Schema.Types.String,
+		start: Schema.Types.Date,
+		due: Schema.Types.Date,
+		project: { type: Schema.Types.ObjectId, ref: 'Project' },
+		task: { type: Schema.Types.ObjectId, ref: 'Task' },
+		container: Schema.Types.ObjectId, // ref: Project.Container
+		tags: [Schema.Types.ObjectId], // ref: Project.Tag
+		users: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+	}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });
+
+	taskSchema.plugin(plugins.files);
+
+	taskSchema.index({ project: 1, index: 1 }, { name: 'ix_project_index' });
+
+	taskSchema.pre('remove', true, function(next, done) {
+		beforeremove(connection, [this.id], (err, result) => {
+			if(err) return done(err);
+			done();
+		});
+		next();
+	});
+
+	taskSchema.post('remove', function(document) {
+		afterremove(connection, [this.id], (err, result) => { /* nothing here, errors are logged */ });
+	});
+
+	taskSchema.methods.delete = function()
+	{
+		this.remove.apply(this, arguments);
+	};
+
+	taskSchema.statics.deleteById = function(id, callback)
+	{
+		beforeremove(connection, [id], (err, result) => {
+			if(err) return callback(err);
+			
+			connection.model('Task').remove({ _id: id }, (err, info) => {
+				if(err) return callback(err);
+
+				callback(null, info.result.n);
+				
+				afterremove(connection, [id], (err, result) => { /* nothing here, errors are logged */ });
+			});
+		});
+	};
+	
+	taskSchema.statics.delete = function(criteria, callback)
+	{
+		connection.model('Task').find(criteria, '_id', { lean: true }, (err, ids) => {
+			if(err) return callback(err);
+			
+			beforeremove(connection, ids, (err, result) => {
+				if(err) return callback(err);
+				
+				connection.model('Task').remove(criteria, (err, info) => {
+					if(err) return callback(err);
+						
+					callback(null, info.result.n);
+					
+					afterremove(connection, ids, (err, result) => { /* nothing here, errors are logged */ });
+				});
+			});
+		});
+	};
+
+
+	return connection.model('Task', taskSchema);
 };
 
-var Schema = mongoose.Schema;
 
-var taskSchema = new Schema({
-  name: Schema.Types.String,
-  description: Schema.Types.String,
-	start: Schema.Types.Date,
-	due: Schema.Types.Date,
-  project: { type: Schema.Types.ObjectId, ref: 'Project' },
-	task: { type: Schema.Types.ObjectId, ref: 'Task' },
-	container: Schema.Types.ObjectId, // ref: Project.Container
-	tags: [Schema.Types.ObjectId], // ref: Project.Tag
-	users: [{ type: Schema.Types.ObjectId, ref: 'User' }]
-}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });
+function beforeremove(connection, ids, callback)
+{
+	var ary = new Array(ids.length);
+	for(let i = 0; i < ids.length; i++)
+	{
+		((id) => {
 
-taskSchema.plugin(plugins.files);
+			ary[i] = new Promise((resolve, reject) => {
 
-taskSchema.index({ name: 1 }, { name: 'ix_name' });
+				Promise.all([
 
-var TaskModel = mongoose.model('Task', taskSchema);
+					new Promise((resolve, reject) => {
+						connection.model('Task').remove({ task: id }, (err, info) => {
+							if(err) return reject(err);
 
-taskSchema.pre('remove', function(next) {
+							resolve(info.result.n);
+						});
+					}),
+					// new Promise((resolve, reject) => {
+					// 	connection.model('Activity').remove({ task: id }, (err, info) => {
+					// 		if(err) return reject(err);
 
-	// cascade delete
-	//models.Message.find({ entity: this._id }).remove().exec();
-	TaskModel.find({ task: this._id }).remove().exec();
-	//models.Activity.find({ task: this._id }).remove().exec();
+					// 		resolve(info.result.n);
+					// 	});
+					// }),
+					new Promise((resolve, reject) => {
+						connection.model('Message').remove({ entity: id }, (err, info) => {
+							if(err) return reject(err);
 
-	next();
-});
+							resolve(info.result.n);
+						});
+					})
 
-exports.Task = TaskModel;
+				]).then((result) => {
+					resolve(result);
+				}, (err) => {
+					reject(err);
+				});
+
+			});
+
+		})(ids[i]);
+	}
+
+	Promise.all(ary).then((result) => {
+		callback(null, result);
+	}, (err) => {
+		callback(err);
+	});
+}
+
+function afterremove(connection, ids, callback)
+{
+	var ary = new Array(ids.length);
+	for(let i = 0; i < ids.length; i++)
+	{
+		((id) => {
+
+			ary[i] = new Promise((resolve, reject) => {
+
+				connection.model('Journal').remove({ entity: id }, (err, info) => {
+					if(err)
+					{
+						logger.log('failed to delete journal for entity: %s, reason: %s', id, err.message);
+						resolve(err);
+						return;
+					}
+					resolve(info.result.n);
+				});
+
+				//todo: delete files
+
+			});
+			
+		})(ids[i]);
+	}
+
+	Promise.all(ary).then((result) => {
+		callback(null, result);
+	});
+}

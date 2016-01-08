@@ -19,7 +19,7 @@ module.exports = function(connection)
 
 	xxxSchema.index({ f1: 1 }, { name: 'ix_f1' });
 
-	xxxSchema.pre('remove', function(next) {
+	xxxSchema.pre('remove', true, function(next, done) {
 
 		// cascade delete
 		// connection.models('zzz').remove({xxx_id: this.id}, (err) => {})

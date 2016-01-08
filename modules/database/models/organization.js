@@ -3,7 +3,7 @@
 var mongoose = require('mongoose'),
 		Schema = mongoose.Schema;
 
-var logger = require('../../library/logger.js'),
+var logger = require('../../logger'),
 		plugins = require('./plugins.js');
 
 

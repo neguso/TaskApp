@@ -1,9 +1,12 @@
 // tests & practices 
 
 var assert = require('assert'),
-		database = require('../database');
+		database = require('../database'),
+		logger = require('../logger');
 
 database.main.open().then((connection) => {
+
+	logger.log('main database models: ', connection.modelNames());
 
 	/// create new document
 	database.main.users.create({ email: 'john@example.com - ' + Math.floor(Math.random() * 100), firstname: 'John' }, (err, newUser) => {

@@ -1,7 +1,7 @@
 module.exports = {
 	mongodb: {
 		server: '192.168.99.100',
-		database: 'test',
+		database: 'main',
 		port: 27017
 	},
 	redis: {
@@ -9,7 +9,8 @@ module.exports = {
 		port: 6379
 	},
 	files: {
-		server: 'storage',
+		location: 'c:\\temp',
+		server: '127.0.0.1',
 		port: 9000
 	},
 	web: {

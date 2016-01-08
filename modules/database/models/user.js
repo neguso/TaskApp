@@ -3,7 +3,7 @@
 var mongoose = require('mongoose'),
 		Schema = mongoose.Schema;
 
-var logger = require('../../library/logger.js'),
+var logger = require('../../logger'),
 		plugins = require('./plugins.js');
 
 
@@ -53,7 +53,7 @@ module.exports = function(connection)
 			});
 		});
 	};
-	
+
 	userSchema.statics.delete = function(criteria, callback)
 	{
 		connection.model('User').find(criteria, '_id', { lean: true }, (err, ids) => {
@@ -148,7 +148,7 @@ function afterremove(connection, ids, callback)
 					resolve(info.result.n);
 				});
 				
-				//todo: clear message refference
+				//todo: clear user refference in messages
 
 			});
 			

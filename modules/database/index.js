@@ -2,8 +2,8 @@
 
 var mongoose = require('mongoose');
 
-var config = require('../config.js'),
-		logger = require('../library/logger.js');
+var config = require('../../config.js'),
+		logger = require('../logger');
 
 
 function Database(configuration)
@@ -13,11 +13,16 @@ function Database(configuration)
 	this.connection = mongoose.createConnection();
 	
 	this.journal = require('./models/journal.js')(this.connection);
+	this.messages = require('./models/message.js')(this.connection);
 	this.organizations = require('./models/organization.js')(this.connection);
 	this.teams = require('./models/team.js')(this.connection);
 	this.users = require('./models/user.js')(this.connection);
-	this.teamuserlinks = require('./models/teamuserlink.js')(this.connection);
 	this.organizationuserlinks = require('./models/organizationuserlink.js')(this.connection);
+	this.teamuserlinks = require('./models/teamuserlink.js')(this.connection);
+
+	this.projects = require('./models/project.js')(this.connection);
+	this.projectuserlinks = require('./models/projectuserlink.js')(this.connection);
+	this.tasks = require('./models/task.js')(this.connection);
 
 
 	// setup logging
@@ -28,6 +33,10 @@ function Database(configuration)
 	this.connection.on('close', () =>
 	{
 		logger.log('connection to database server closed');
+	});
+	this.connection.on('reconnected', () =>
+	{
+		logger.log('connection to database server restored');
 	});
 	this.connection.on('error', (err) =>
 	{

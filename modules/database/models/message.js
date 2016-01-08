@@ -3,7 +3,7 @@
 var mongoose = require('mongoose'),
 		Schema = mongoose.Schema;
 
-var logger = require('../../library/logger.js'),
+var logger = require('../../logger'),
 		plugins = require('./plugins.js');
 
 
@@ -21,7 +21,7 @@ module.exports = function(connection)
 	messageSchema.index({ timestamp: 1, user: 1 }, { name: 'ix_timestamp_user' });
 
 	messageSchema.post('remove', function(document) {
-		afterremove(connection, [this.id], (err, result) => { /* nothing here, errors are logged */ });
+		afterremove(connection, { _id: this.id }, (err, result) => { /* nothing here, errors are logged */ });
 	});
 
 	messageSchema.methods.delete = function()
@@ -66,7 +66,6 @@ function afterremove(connection, condition, callback)
 			keys.push(message.files.map((file) => { return file.key; }));
 		});
 		
-		//todo: find a way to delete attached files
-		//ex: files.delete(keys, (err, count) => { });
+		//todo: delete files
 	});
 }

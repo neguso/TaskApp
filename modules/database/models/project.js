@@ -3,9 +3,8 @@
 var mongoose = require('mongoose'),
 		Schema = mongoose.Schema;
 
-var logger = require('../../library/logger.js'),
+var logger = require('../../logger'),
 		plugins = require('./plugins.js');
-
 
 
 module.exports = function(connection)
@@ -157,8 +156,7 @@ function afterremove(connection, ids, callback)
 					resolve(info.result.n);
 				});
 
-				//todo: clear message refferences
-				//todo: remove attached files
+				//todo: delete files
 
 			});
 			
@@ -169,98 +167,3 @@ function afterremove(connection, ids, callback)
 		callback(null, result);
 	});
 }
-
-
-
-
-
-
-
-
-
-var config = require('../config.js');
-var attachments = require('../core/attachments.js')(config.files.location);
-
-
-
-
-// assign user to project
-projectSchema.methods.assign = function(user, role, cb)
-{
-	models.ProjectUserLink.create({
-		role: role,
-		project: this.id,
-		user: user
-	}, cb);
-};
-
-
-var ProjectModel = mongoose.model('Project', projectSchema);
-
-exports.Project = ProjectModel;
-
-
-projectSchema.pre('remove', function(next) {
-
-	// cascade delete user links
-	models.ProjectUserLink.find({ project: this._id }).remove().exec();
-
-	// cascade delete files
-	this.files.map((file) => attachments.remove(file.key));
-
-	next();
-});
-
-/**
- * Read user projects.
- * @param {ObjectID} userId
- * @returns {Promise} A promise that returns an array of {@link ProjectInfo} objects.
- */
-projectSchema.statics.read = function(userId) {
-	return new Promise(function(resolve, reject) {
-
-		models.ProjectUserLink.find({ user: userId }, 'project', { lean: true }).populate('project', 'name description').exec(function(err, documents)
-		{
-			if(err) return reject(err);
-
-			resolve(documents.map(function(p) {
-				return { _id: p.project._id, name: p.project.name, description: p.project.description }
-			}));
-		});
-
-	});
-};
-
-
-/**
- * Project model object.
- * @typedef {object} ProjectModel
- * @prop {ObjectID} _id
- * @prop {string} name
- * @prop {string} description
- * @prop { Array.<ContainerModel> } containers
- * @prop { Array.<TagModel> } tags
- * @prop { Array.<FileModel> } files
- */
-
-/**
- * Container model object.
- * @typedef {object} ContainerModel
- * @prop {string} name
- * @prop {string} description
- */
-
-/**
- * Tag model object.
- * @typedef {object} TagModel
- * @prop {string} name
- * @prop {string} color
- */
-
-/**
- * File model object.
- * @typedef {object} FileModel
- * @prop {string} name
- * @prop {number} size
- * @prop {string} key
- */
