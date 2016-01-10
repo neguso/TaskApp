@@ -13,7 +13,8 @@ module.exports = function(connection)
 		timestamp: { type: Schema.Types.Date, default: Date.now },
 		content: { type: Schema.Types.String, maxlength: 512 },
 		message: { type: Schema.Types.ObjectId, ref: 'Message' },
-		user: { type: Schema.Types.ObjectId, ref: 'User' }
+		user: { type: Schema.Types.ObjectId, ref: 'User' },
+		entity: Schema.Types.ObjectId
 	});
 
 	messageSchema.plugin(plugins.files);

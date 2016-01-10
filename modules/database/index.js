@@ -12,8 +12,10 @@ function Database(configuration)
 
 	this.connection = mongoose.createConnection();
 	
-	this.journal = require('./models/journal.js')(this.connection);
+	this.files = require('./models/file.js')(this.connection);
 	this.messages = require('./models/message.js')(this.connection);
+	this.journal = require('./models/journal.js')(this.connection);
+
 	this.organizations = require('./models/organization.js')(this.connection);
 	this.teams = require('./models/team.js')(this.connection);
 	this.users = require('./models/user.js')(this.connection);
@@ -23,6 +25,7 @@ function Database(configuration)
 	this.projects = require('./models/project.js')(this.connection);
 	this.projectuserlinks = require('./models/projectuserlink.js')(this.connection);
 	this.tasks = require('./models/task.js')(this.connection);
+	//this.activities = require('./models/activity.js')(this.connection);
 
 
 	// setup logging
@@ -44,8 +47,11 @@ function Database(configuration)
 	});
 }
 
+
+// underlying connection
 Database.prototype.connection = null;
 
+// open connection
 Database.prototype.open = function()
 {
 	var self = this;
@@ -89,6 +95,7 @@ Database.prototype.open = function()
 	});
 };
 
+// close connection
 Database.prototype.close = function()
 {
 	var self = this;

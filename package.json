@@ -11,7 +11,9 @@
   "author": "Ovidiu Negus (neguso@hotmail.com)",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "latest",
     "express": "latest",
+    "jwt-simple": "latest",
     "mongoose": "latest",
     "redis": "latest",
     "restify": "latest",

@@ -2,9 +2,8 @@ var frisby = require('frisby'),
 		files = require('./index.js');
 
 
-
 frisby.create('file service test')
-	.get('http://127.0.0.1:9000/omv6ilsnug/file.txt')
+	.get('http://localhost:9000/12345')
 	.expectStatus(200)
 	.expectBodyContains('file content')
 	.toss();

@@ -2,8 +2,8 @@
 
 var redis = require('redis');
 
-var config = require('../config.js'),
-		logger = require('../library/logger.js');
+var config = require('../../config.js'),
+		logger = require('../logger');
 
 
 function ValueStore(configuration)

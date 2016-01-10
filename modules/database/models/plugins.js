@@ -6,7 +6,7 @@ var Schema = mongoose.Schema;
 var fileSchema = new Schema({
 	name: Schema.Types.String,
 	size: Schema.Types.Number,
-	key: Schema.Types.String
+	file: { type: Schema.Types.ObjectId, ref: 'File' }
 });
 
 exports.files = function(schema)

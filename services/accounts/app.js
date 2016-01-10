@@ -1,6 +1,6 @@
-// files service / public interface
+// accounts service / public interface
 
-var	express = require('express'),
+var express = require('express'),
 		bodyparser = require('body-parser');
 
 var config = require('../../config.js'),
@@ -11,12 +11,14 @@ var app = express();
 
 // install middleware
 app.use(bodyparser.json());
+app.use(bodyparser.urlencoded({ extended: true }));
 
 // handle authentication
-app.all('/*', require('../authenticate.js'));
+app.all('/accounts/logout', require('../authenticate.js'));
+app.all('/accounts/profile', require('../authenticate.js'));
 
 // handle application logic
-app.use('/files', require('./routes.js'));
+app.use('/accounts', require('./routes.js'));
 
 // handle unknown routes
 app.use((req, res, next) => {
@@ -52,6 +54,6 @@ app.use((err, req, res, next) => {
 });
 
 
-var server = app.listen(config.files.port, () => {
-  console.log('Files service listening on port ' + server.address().port);
+var server = app.listen(config.accounts.port, () => {
+  console.log('Accounts service listening on port ' + server.address().port);
 });

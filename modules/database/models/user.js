@@ -10,9 +10,9 @@ var logger = require('../../logger'),
 module.exports = function(connection)
 {
 	var userSchema = new Schema({
-		email: Schema.Types.String,
-		firstname: Schema.Types.String,
-		lastname: Schema.Types.String
+		email: { type: Schema.Types.String, minlength: 1, maxlength: 128, required: true },
+		firstname: { type: Schema.Types.String, minlength: 1, maxlength: 32, required: true },
+		lastname: { type: Schema.Types.String, minlength: 1, maxlength: 32 }
 	}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });
 
 	userSchema.virtual('fullname').get(function()

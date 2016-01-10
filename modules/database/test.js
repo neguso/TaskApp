@@ -35,6 +35,13 @@ database.main.open().then((connection) => {
 			if(err) return console.log('error finding users with criteria and pagination');
 		});
 
+		/// retrieve lean documents by condition
+		database.main.users.find({}, 'firstname', { lean: true }, (err, findUsers) => {
+			if(err) return console.log('error finding lean users with criteria');
+		});
+
+		// population
+		//todo:
 
 		/// update document
 		newUser.firstname = 'Updated';
@@ -106,9 +113,6 @@ database.main.open().then((connection) => {
 			});
 		});
 	});
-
-
-
 
 
 }, (err) => {

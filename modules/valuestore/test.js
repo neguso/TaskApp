@@ -39,17 +39,27 @@ valuestore.session.open().then((client) => {
 		});
 	});
 
-	// hash set multiple values
-	client.hmset('user:12345', ['token1', 'abc1', 'token2', 'abc2'], (err, result) => {
-		if(err) return console.log('error setting hash fields');
+	// hash set multiple values (1)
+	client.hmset('user:1', ['token1', 'abc1', 'token2', 'abc2'], (err, result) => {
+		if(err) return console.log('error setting hash fields (1)');
 
 		// hash get multiple values
-		client.hmget('user:12345', ['token1', 'token2'], (err, values) => {
-			if(err) return console.log('error getting hash fields');
+		client.hmget('user:1', ['token1', 'token2'], (err, values) => {
+			if(err) return console.log('error getting hash fields (1)');
 			assert(values[0] === 'abc1' && values[1] === 'abc2', 'unexpected value');
 		});
 	});
 
+	// hash set multiple values (2)
+	client.hmset('user:2', { token1: 'abc1', token2: 'abc2' }, (err, result) => {
+		if(err) return console.log('error setting hash fields (2)');
+
+		// hash get multiple values
+		client.hgetall('user:2', (err, value) => {
+			if(err) return console.log('error getting hash fields (2)');
+			assert(value.token1 === 'abc1' && value.token2 === 'abc2', 'unexpected value');
+		});
+	});
 
 
 
