@@ -1,7 +1,6 @@
 // files service / public interface
 
-var	express = require('express'),
-		bodyparser = require('body-parser');
+var	express = require('express');
 
 var config = require('../../config.js'),
 		errors = require('../errors.js');
@@ -10,7 +9,9 @@ var config = require('../../config.js'),
 var app = express();
 
 // install middleware
-app.use(bodyparser.urlencoded({ extended: true }));
+app.use(require('body-parser').urlencoded({ extended: true }));
+app.use(require('../monitor.js').performance);
+app.use(require('../monitor.js').logging);
 
 // handle authentication
 app.all('/*', require('../authenticate.js'));
@@ -24,12 +25,6 @@ app.use((req, res, next) => {
 	res.status(400);
 	res.json({ code: 'Bad Request' });
 	res.end();
-	next();
-});
-
-// logging
-app.use((req, res, next) => {
-	console.log('%s %s [%s]', req.method, req.url, res.statusCode);
 	next();
 });
 

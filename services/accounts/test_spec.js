@@ -46,7 +46,16 @@ frisby.create('register: duplicate email')
 	})
 	.toss();
 
-
+frisby.create('register: ok')
+	.post(server + '/accounts/register', {
+		email: random(1, 20) + '@' + random(1, 20) + '.com',
+		firstname: random(1, 32)
+	})
+	.expectStatus(200)
+	.expectJSON({
+		status: 'success'
+	})
+	.toss();
 
 
 function random(min, max)

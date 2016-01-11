@@ -10,7 +10,7 @@ var app = express();
 
 // install middleware
 app.use(require('body-parser').urlencoded({ extended: true }));
-app.use(require('../monitor.js').response);
+app.use(require('../monitor.js').performance);
 app.use(require('../monitor.js').logging);
 
 // handle authentication
@@ -26,12 +26,6 @@ app.use((req, res, next) => {
 	res.status(400);
 	res.json({ code: 'Bad Request' });
 	res.end();
-	next();
-});
-
-// logging
-app.use((req, res, next) => {
-	console.log('%s %s [%s]%s', req.method, req.url, res.statusCode, typeof res.monitor === 'undefined' ? '' : ' - ' + res.monitor.elapsed + 'ms');
 	next();
 });
 

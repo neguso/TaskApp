@@ -1,4 +1,4 @@
-// accounts serrvice / authorization
+// accounts service / authorization
 
 var database = require('../../modules/database'),
 		errors = require('../errors.js');

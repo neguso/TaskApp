@@ -3,19 +3,21 @@ module.exports = {
 	logging: function(req, res, next)
 	{
 		res.on('finish', () => {
-			console.log('%s %s [%s]%s', req.method, req.url, res.statusCode, typeof res.monitor === 'undefined' ? '' : ' - ' + res.monitor.elapsed + 'ms');
+			console.log('%s %s [%s]%s', req.method, req.url, res.statusCode, typeof res.monitor === 'undefined' ? '' : ' - ' + Math.round(res.monitor.elapsed) + 'ms');
 		});
+
+		next();
 	},
 	
-	response: function(req, res, next)
+	performance: function(req, res, next)
 	{
 		var start = process.hrtime();
 
 		res.on('finish', () => {
-			var hrtime = process.hrtime(start);
-			var elapsed = parseFloat(hrtime[0] + (hrtime[1] / 1000000).toFixed(3), 10);
+			var diff = process.hrtime(start);
+			var elapsed = (diff[0] * 1e9 + diff[1]) / 1e6;
 
-			// save 
+			// save response time
 			res.monitor = {
 				elapsed: elapsed
 			};

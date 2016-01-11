@@ -2,7 +2,7 @@ var jwt = require('jwt-simple');
 
 var config = require('../config.js'),
 		errors = require('./errors.js'),
-		valuestore = require('../modules/valuestore/index.js');
+		valuestore = require('../modules/valuestore');
 
 
 module.exports = function(req, res, next)
@@ -21,16 +21,18 @@ module.exports = function(req, res, next)
 
 			valuestore.session.open().then((client) => {
 
-				client.hgetall(decoded_token.token, (err, token) => {
-					if(err) return next(new errors.Internal(error.message));
+				client.hgetall(decoded_token.token, (err, info) => {
+					if(err) return next(new errors.Internal(err.message));
 
-					if(token.keys().length === 0)
+					if(info.keys().length === 0)
 						return next(new errors.Unauthorized('Invalid token'));
 
-					// decorate request
-					req.user = new User(token);
-					req.session = new Session(token); 
-					// { user: <string> }
+					// info ::= { user: <objectid> }
+
+					// init user
+					req.user = new User(info.user);
+					// init session
+					req.session = new Session(info.user, client); 
 
 					next();
 				});
@@ -55,25 +57,33 @@ module.exports = function(req, res, next)
 };
 
 
-function User(token)
+function User(id)
 {
-	
+	this.id = id;
 }
 
 User.prototype.id = null;
 
 
-function Session(token)
+function Session(id, storage)
 {
-	
+	this.storage = storage;
 }
 
-Session.prototype.set = function(key, value)
+Session.prototype.storage = null;
+
+Session.prototype.set = function(key, value, callback)
 {
-	
+	this.storage.hset(this.id, key, value, (err, result) => {
+		if(err) return callback(err);
+		callback(null, result);
+	});
 };
 
-Session.prototype.get = function(key)
+Session.prototype.get = function(key, callback)
 {
-		
+	this.storage.hget(this.id, key, (err, value) => {
+		if(err) callback(err);
+		callback(null, value);
+	});
 };
