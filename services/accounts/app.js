@@ -1,17 +1,17 @@
 // accounts service / public interface
 
-var express = require('express'),
-		bodyparser = require('body-parser');
+var express = require('express');
 
-var config = require('../../config.js'),
+var	config = require('../../config.js'),
 		errors = require('../errors.js');
 
 
 var app = express();
 
 // install middleware
-app.use(bodyparser.json());
-app.use(bodyparser.urlencoded({ extended: true }));
+app.use(require('body-parser').urlencoded({ extended: true }));
+app.use(require('../monitor.js').response);
+app.use(require('../monitor.js').logging);
 
 // handle authentication
 app.all('/accounts/logout', require('../authenticate.js'));
@@ -31,7 +31,7 @@ app.use((req, res, next) => {
 
 // logging
 app.use((req, res, next) => {
-	console.log('%s %s [%s]', req.method, req.url, res.statusCode);
+	console.log('%s %s [%s]%s', req.method, req.url, res.statusCode, typeof res.monitor === 'undefined' ? '' : ' - ' + res.monitor.elapsed + 'ms');
 	next();
 });
 

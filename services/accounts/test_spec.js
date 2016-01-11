@@ -2,21 +2,31 @@ var frisby = require('frisby');
 
 var server = 'http://localhost:9001';
 
-frisby.create('register user')
-	.post(server + '/accounts/register', {
-		email: random(1, 20) + '@' + random(1, 20) + '.com',
-		firstname: random(1, 32),
-		lastname: random(1, 32)
-	})
-	.expectStatus(200)
+frisby.create('register: missing params')
+	.post(server + '/accounts/register', {})
+	.expectStatus(409)
 	.expectJSON({
-		status: 'success'
+		code: 'Invalid Argument'
 	})
 	.toss();
 
-frisby.create('register user, no lastname')
+frisby.create('register: invalid params')
 	.post(server + '/accounts/register', {
-		email: random(1, 20) + '@' + random(1, 20) + '.com',
+		email: 'bad email',
+		firstname: 'too long first name too long first name too long first name ',
+		lastname: ''
+	})
+	.expectStatus(409)
+	.expectJSON({
+		code: 'Invalid Argument'
+	})
+	.toss();
+
+var email = random(1, 20) + '@' + random(1, 20) + '.com';
+
+frisby.create('register: ok')
+	.post(server + '/accounts/register', {
+		email: email,
 		firstname: random(1, 32)
 	})
 	.expectStatus(200)
@@ -25,7 +35,16 @@ frisby.create('register user, no lastname')
 	})
 	.toss();
 
-
+frisby.create('register: duplicate email')
+	.post(server + '/accounts/register', {
+		email: email,
+		firstname: random(1, 32)
+	})
+	.expectStatus(200)
+	.expectJSON({
+		status: 'fail'
+	})
+	.toss();
 
 
 

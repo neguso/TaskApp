@@ -10,7 +10,7 @@ var config = require('../../config.js'),
 var app = express();
 
 // install middleware
-app.use(bodyparser.json());
+app.use(bodyparser.urlencoded({ extended: true }));
 
 // handle authentication
 app.all('/*', require('../authenticate.js'));

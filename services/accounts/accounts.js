@@ -24,7 +24,7 @@ module.exports = {
 			return next(new errors.InvalidArgument('Invalid arguments'));
 
 		// check lastname
-		if(validator.isString(lastname) && (lastname.length === 0 || lastname.length > 32))
+		if(validator.isString(lastname) && (lastname.length > 32))
 			return next(new errors.InvalidArgument('Invalid arguments'));
 
 
