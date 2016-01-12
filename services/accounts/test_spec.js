@@ -13,7 +13,7 @@ frisby.create('register: missing params')
 frisby.create('register: invalid params')
 	.post(server + '/accounts/register', {
 		email: 'bad email',
-		firstname: 'too long first name too long first name too long first name ',
+		firstname: 'too long first name too long first name too long first name',
 		lastname: ''
 	})
 	.expectStatus(409)
@@ -22,11 +22,12 @@ frisby.create('register: invalid params')
 	})
 	.toss();
 
-var email = random(1, 20) + '@' + random(1, 20) + '.com';
+var email = random(1, 20) + '@domain.com';
 
 frisby.create('register: ok')
 	.post(server + '/accounts/register', {
 		email: email,
+		password: 'secret',
 		firstname: random(1, 32)
 	})
 	.expectStatus(200)
@@ -38,6 +39,7 @@ frisby.create('register: ok')
 frisby.create('register: duplicate email')
 	.post(server + '/accounts/register', {
 		email: email,
+		password: 'secret',
 		firstname: random(1, 32)
 	})
 	.expectStatus(200)
@@ -46,16 +48,44 @@ frisby.create('register: duplicate email')
 	})
 	.toss();
 
-frisby.create('register: ok')
+
+var login = random(1, 5) + '@domain.com';
+
+frisby.create('register for login')
 	.post(server + '/accounts/register', {
-		email: random(1, 20) + '@' + random(1, 20) + '.com',
-		firstname: random(1, 32)
+		email: login,
+		password: 'secret',
+		firstname: 'Joe'
 	})
 	.expectStatus(200)
 	.expectJSON({
 		status: 'success'
 	})
 	.toss();
+
+frisby.create('login')
+	.post(server + '/accounts/login', {
+		email: login,
+		password: 'secret'
+	})
+	.expectStatus(200)
+	.expectJSON({
+		status: 'success'
+	})
+	.toss();
+
+frisby.create('login & remember')
+	.post(server + '/accounts/login', {
+		email: login,
+		password: 'secret',
+		remember: true
+	})
+	.expectStatus(200)
+	.expectJSON({
+		status: 'success'
+	})
+	.toss();
+
 
 
 function random(min, max)

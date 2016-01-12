@@ -61,9 +61,28 @@ valuestore.session.open().then((client) => {
 		});
 	});
 
+	// batch
+	var batch = client.batch();
+	batch.set('bkey1', 'bvalue1');
+	batch.set('bkey2', 'bvalue2');
+	batch.set('bkey3', 'bvalue3');
+	batch.exec((err, results) => {
+		if(err) return console.log('error setting values in batch');
+		assert(results[0] === 'OK' && results[1] === 'OK' && results[2] === 'OK', 'unexpected values');
+
+		batch = client.batch();
+		batch.get('bkey1');
+		batch.get('bkey2');
+		batch.get('bkey3');
+		batch.exec((err, results) => {
+			if(err) return console.log('error getting values in batch');
+			
+			assert(results[0] === 'bvalue1' && results[1] === 'bvalue2' && results[2] === 'bvalue3', 'unexpected values');
+		});
 
 
+	});
 
 }, (err) => {
-
+	console.log('error connecting to Redis');
 });

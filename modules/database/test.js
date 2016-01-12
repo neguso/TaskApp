@@ -9,7 +9,7 @@ database.main.open().then((connection) => {
 	logger.log('main database models: ', connection.modelNames());
 
 	/// create new document
-	database.main.users.create({ email: 'john@example.com - ' + Math.floor(Math.random() * 100), firstname: 'John' }, (err, newUser) => {
+	database.main.users.create({ email: 'john@example.com - ' + Math.floor(Math.random() * 100), firstname: 'John', password: 'secret' }, (err, newUser) => {
 		if(err) return console.log('error creating new user');
 
 		var id = newUser.id;
@@ -17,11 +17,13 @@ database.main.open().then((connection) => {
 		/// retrieve document by id
 		database.main.users.findById(id, (err, findUser) => {
 			if(err) return console.log('error finding user by id');
+			assert(findUser !== null, 'should not be null');
 		});
 		
 		/// retrieve one document by condition
 		database.main.users.findOne({ _id: id }, (err, findUser) => {
 			if(err) return console.log('error finding users by condition');
+			assert(findUser !== null, 'should not be null');
 		});
 		
 		/// retrieve documents by condition
@@ -33,27 +35,34 @@ database.main.open().then((connection) => {
 		/// retrieve documents by condition with pagination
 		database.main.users.find({}, null, { skip: 2, limit: 3 }, (err, findUsers) => {
 			if(err) return console.log('error finding users with criteria and pagination');
+			assert(findUsers.length > 0, 'should find users');
 		});
 
 		/// retrieve lean documents by condition
 		database.main.users.find({}, 'firstname', { lean: true }, (err, findUsers) => {
 			if(err) return console.log('error finding lean users with criteria');
+			assert(findUsers.length > 0, 'should find users');
 		});
 
 		// population
 		//todo:
 
 		/// update document
-		newUser.firstname = 'Updated';
+		newUser.lastname = 'Updated';
 		newUser.save((err, updateUser) => {
 			if(err) return console.log('error deleting user by document');
+
+			database.main.users.findById(id, (err, findUser) => {
+				if(err) return console.log('error finding user');
+				assert(findUser.lastname === 'Updated', 'user should be updated');
+			});
 		});
 
 	});
 
 
 	/// remove document using document.delete()
-	database.main.users.create({ email: 'delete@example.com' }, (err, newUser) => {
+	database.main.users.create({ email: 'delete@example.com', firstname: 'Joe', password: 'secret' }, (err, newUser) => {
 		if(err) return console.log('error creating user');
 		newUser.delete((err, deletedUser) => {
 			if(err) return console.log('error deleting user by document');
@@ -61,7 +70,7 @@ database.main.open().then((connection) => {
 	});
 
 	/// remove document by id using model.delete()
-	database.main.users.create({ email: 'deletebyid@example.com' }, (err, newUser) => {
+	database.main.users.create({ email: 'deletebyid@example.com', firstname: 'Joe', password: 'secret' }, (err, newUser) => {
 		if(err) return console.log('error creating user');
 		database.main.users.deleteById(newUser.id, (err, count) => {
 			if(err) return console.log('error deleting user by id');
@@ -69,7 +78,7 @@ database.main.open().then((connection) => {
 	});
 	
 	/// remove documents by condition using model.delete()
-	database.main.users.create([{ email: 'deletebycondition@example1.com', firstname: 'a' }, { email: 'deletebycondition@example2.com', firstname: 'a' }], (err, newUsers) => {
+	database.main.users.create([{ email: 'deletebycondition1@example.com', firstname: 'a', password: 'secret' }, { email: 'deletebycondition2@example.com', firstname: 'a', password: 'secret' }], (err, newUsers) => {
 		if(err) return console.log('error creating users');
 		database.main.users.delete({ firstname: 'a' }, (err, count) => {
 			if(err) return console.log('error deleting user with criteria');
@@ -82,7 +91,7 @@ database.main.open().then((connection) => {
 		if(err) return console.log('error creating organization');
 		
 		// using document.delete()
-		database.main.users.create([{ email: 'deletedocument@example1.com', firstname: 'b' }, { email: 'deletedocument@example2.com', firstname: 'b' }], (err, newUsers) => {
+		database.main.users.create([{ email: 'deletedocument1@example.com', firstname: 'b', password: 'secret' }, { email: 'deletedocument2@example.com', firstname: 'b', password: 'secret' }], (err, newUsers) => {
 			if(err) return console.log('error creating users');
 			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id }, { organization: newOrganization.id, user: newUsers[1].id }], (err, newLinks) => {
 				if(err) return console.log('error creating organization-user links');
@@ -99,7 +108,7 @@ database.main.open().then((connection) => {
 		});
 
 		// using model.delete
-		database.main.users.create([{ email: 'deletemodel@example1.com', firstname: 'c' }, { email: 'deletemodel@example2.com', firstname: 'c' }], (err, newUsers) => {
+		database.main.users.create([{ email: 'deletemodel1@example.com', firstname: 'c', password: 'secret' }, { email: 'deletemodel2@example.com', firstname: 'c', password: 'secret' }], (err, newUsers) => {
 			if(err) return console.log('error creating users');
 			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id }, { organization: newOrganization.id, user: newUsers[1].id }], (err, newLinks) => {
 				if(err) return console.log('error creating organization-user links');
@@ -115,6 +124,14 @@ database.main.open().then((connection) => {
 	});
 
 
-}, (err) => {
+	// expires
+	database.main.tokens.create({ token: '12345', expires: new Date(2016, 0, 12, 22, 12) }, (err, token) => {
+		if(err) return console.log('error creating token');
+		
+	});
 
+
+
+}, (err) => {
+	console.log('error connecting to MongoDB');
 });

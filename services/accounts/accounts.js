@@ -14,6 +14,7 @@ module.exports = {
 	register: function(req, res, next)
 	{
 		var	email = validator.toString(req.body.email).trim(),
+				password = validator.toString(req.body.password),
 				firstname = validator.toString(req.body.firstname).trim(),
 				lastname = (typeof req.body.lastname === 'undefined' ? req.body.lastname : validator.toString(req.body.lastname).trim());
 
@@ -44,7 +45,7 @@ module.exports = {
 				}
 
 				// create user
-				var user = { email: email, firstname: firstname };
+				var user = { email: email, password: password, firstname: firstname };
 				if(validator.isString(lastname))
 					user.lastname = lastname;
 				database.main.users.create(user, (err, newUser) => {
@@ -72,83 +73,88 @@ module.exports = {
 		if(!validator.isEmail(email) || email.length === 0 || email.length > 128)
 			return next(new errors.InvalidArgument('Invalid arguments'));
 
-		// check credentials
-		// if session already exists return it
-		// else create session
-
-
 		database.main.open().then((connection) => {
 			
 			// check credentials
-			database.main.users.findOne({ email: email, password: password }, '_id, email, firstname', { lean: true }, (err, user) => {
+			database.main.users.findOne({ email: email, password: password }, 'email, firstname, lastname', { lean: true }, (err, user) => {
 				if(err) return next(new errors.Internal(err.message));
 
-			if(user === null)
-			{
-				res.json({ status: 'fail', reason: 'Invalid credentials' });
-				res.end();
-				return next();
-			}
+				if(user === null)
+				{
+					res.json({ status: 'fail', reason: 'Invalid credentials' });
+					res.end();
+					return next();
+				}
 
-			valuestore.session.open().then((client) => {
+				if(remember)
+				{
+					var token = maketoken(), expires = new Date(); expires.setDate(expires.getDate() + 14);
 
-				// check existing session
-				client.hget(user.id + ':auth', 'user', (err, auth) => {
-					if(err) return next(new errors.Internal(err.message));
+					// create token
+					database.main.tokens.create({ token: token, user: user._id.toString(), expires: expires }, (err, newtoken) => {
+						if(err) return next(new errors.Internal(err.message));
 
-					if(auth === null)
-					{
-						// create session
-					}
-					else
-					{
-						// session found, check token
-						
-						database.main.tokens.findOne()
-						
-						
-						
-						
+						valuestore.session.open().then((client) => {
 
-						res.json({
-							status: 'success',
-							reason: '',
-							token: jwt.encode({ expiration:  })
+							// create session
+							var batch = client.batch();
+							batch.hmset(token + ':auth', { user: user._id.toString() });
+							batch.expire(token + ':auth', 30 * 60);
+							batch.exec((err, results) => {
+								if(err) return next(new errors.Internal(err.message));
+
+								res.json({
+									status: 'success',
+									token: token,
+									expires: expires,
+									account: { email: user.email, firstname: user.firstname, lastname: user.lastname }
+								});
+								res.end();
+								next();
+							});
+
+						}, (err) => {
+							// session error
+							next(new errors.Internal(err.message));
 						});
-						res.end();
-						return next();
-					}
 
+					});
+				}
+				else
+				{
+					valuestore.session.open().then((client) => {
 
+						var token = maketoken(), expires = new Date(); expires.setMinutes(expires.getMinutes() + 30);
 
-					if(info.keys().length === 0)
-						return next(new errors.Unauthorized('Invalid token'));
+						// create session
+						var batch = client.batch();
+						batch.hmset(token + ':auth', { user: user._id.toString() });
+						batch.expire(token + ':auth', 30 * 60);
+						batch.exec((err, results) => {
+							if(err) return next(new errors.Internal(err.message));
 
-					// info ::= { user: <objectid> }
+							res.json({
+								status: 'success',
+								token: token,
+								expires: expires,
+								account: { email: user.email, firstname: user.firstname, lastname: user.lastname }
+							});
+							res.end();
+							next();
+						});
 
-					// init user
-					req.user = new User(info.user);
-					// init session
-					req.session = new Session(info.user, client); 
+					}, (err) => {
+						// session error
+						next(new errors.Internal(err.message));
+					});
+				}
 
-					next();
-				});
-
-
-			}, (err) => {
-				// session error
-				next(new errors.Internal(err.message));
 			});
 
 		}, (err) => {
-			// session error
+			// database error
 			next(new errors.Internal(err.message));
 		});
-
-		}, (err) => {
-			next(new errors.Internal(err.message));
-		});
-		next();
 	},
 
 	// POST /accounts/logout
@@ -182,3 +188,13 @@ module.exports = {
 	}
 
 };
+
+
+function maketoken()
+{
+	var ary = new Array(16);
+	var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+	for(var i = 0; i < ary.length; i++)
+		ary[i] = chars.charAt(Math.floor(Math.random() * chars.length));
+	return ary.join('');
+}

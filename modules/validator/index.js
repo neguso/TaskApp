@@ -8,6 +8,7 @@ module.exports = {
 	isEmail: isEmail,
 
 	// sanitizers //
+	toBoolean: toBoolean,
 	toString: toString
 
 };
