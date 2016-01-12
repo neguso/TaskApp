@@ -21,6 +21,7 @@ module.exports = function(req, res, next)
 
 			valuestore.session.open().then((client) => {
 
+				// get token
 				client.hgetall(decoded_token.token, (err, info) => {
 					if(err) return next(new errors.Internal(err.message));
 

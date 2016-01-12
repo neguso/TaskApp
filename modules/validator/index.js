@@ -17,7 +17,7 @@ function isBoolean(value)
 {
 	if(typeof value === 'boolean')
 		return true;
-	if(isString(value) && ['false', 'true'].indexOf(value.trim().toLowerCase()) !== -1)
+	if(isString(value) && ['false', 'true', '0', '1'].indexOf(value.trim().toLowerCase()) !== -1)
 		return true;
 	return false;
 }
@@ -32,6 +32,13 @@ function isEmail(value)
 	return isString(value) && /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(value);
 }
 
+
+function toBoolean(value)
+{
+	if(typeof value === 'boolean') return value;
+	if(isString(value)) return ['true', '1'].indexOf(value.trim().toLowerCase()) !== -1;
+	return false;
+}
 
 function toString(value)
 {

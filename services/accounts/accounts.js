@@ -1,5 +1,7 @@
 // accounts service / implementation
 
+var jwt = require('jwt-simple');
+
 var database = require('../../modules/database'),
 		valuestore = require('../../modules/valuestore/index.js'),
 		validator = require('../../modules/validator'),
@@ -15,15 +17,15 @@ module.exports = {
 				firstname = validator.toString(req.body.firstname).trim(),
 				lastname = (typeof req.body.lastname === 'undefined' ? req.body.lastname : validator.toString(req.body.lastname).trim());
 
-		// check email
+		// validate email
 		if(!validator.isEmail(email) || email.length === 0 || email.length > 128)
 			return next(new errors.InvalidArgument('Invalid arguments'));
 
-		// check firstname
+		// validate firstname
 		if(firstname.length === 0 || firstname.length > 32)
 			return next(new errors.InvalidArgument('Invalid arguments'));
 
-		// check lastname
+		// validate lastname
 		if(validator.isString(lastname) && (lastname.length > 32))
 			return next(new errors.InvalidArgument('Invalid arguments'));
 
@@ -62,6 +64,90 @@ module.exports = {
 	// POST /accounts/login
 	login: function(req, res, next)
 	{
+		var email = validator.toString(req.body.email),
+				password = validator.toString(req.body.password),
+				remember = validator.toBoolean(req.body.remember);
+
+		// validate email
+		if(!validator.isEmail(email) || email.length === 0 || email.length > 128)
+			return next(new errors.InvalidArgument('Invalid arguments'));
+
+		// check credentials
+		// if session already exists return it
+		// else create session
+
+
+		database.main.open().then((connection) => {
+			
+			// check credentials
+			database.main.users.findOne({ email: email, password: password }, '_id, email, firstname', { lean: true }, (err, user) => {
+				if(err) return next(new errors.Internal(err.message));
+
+			if(user === null)
+			{
+				res.json({ status: 'fail', reason: 'Invalid credentials' });
+				res.end();
+				return next();
+			}
+
+			valuestore.session.open().then((client) => {
+
+				// check existing session
+				client.hget(user.id + ':auth', 'user', (err, auth) => {
+					if(err) return next(new errors.Internal(err.message));
+
+					if(auth === null)
+					{
+						// create session
+					}
+					else
+					{
+						// session found, check token
+						
+						database.main.tokens.findOne()
+						
+						
+						
+						
+
+						res.json({
+							status: 'success',
+							reason: '',
+							token: jwt.encode({ expiration:  })
+						});
+						res.end();
+						return next();
+					}
+
+
+
+					if(info.keys().length === 0)
+						return next(new errors.Unauthorized('Invalid token'));
+
+					// info ::= { user: <objectid> }
+
+					// init user
+					req.user = new User(info.user);
+					// init session
+					req.session = new Session(info.user, client); 
+
+					next();
+				});
+
+
+			}, (err) => {
+				// session error
+				next(new errors.Internal(err.message));
+			});
+
+		}, (err) => {
+			// session error
+			next(new errors.Internal(err.message));
+		});
+
+		}, (err) => {
+			next(new errors.Internal(err.message));
+		});
 		next();
 	},
 

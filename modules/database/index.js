@@ -11,7 +11,9 @@ function Database(configuration)
 	this.configuration = configuration;
 
 	this.connection = mongoose.createConnection();
-	
+
+	this.tokens = require('./models/token.js')(this.connection);
+
 	this.files = require('./models/file.js')(this.connection);
 	this.messages = require('./models/message.js')(this.connection);
 	this.journal = require('./models/journal.js')(this.connection);
