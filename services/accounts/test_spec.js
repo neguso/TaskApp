@@ -78,13 +78,29 @@ frisby.create('login & remember')
 	.post(server + '/accounts/login', {
 		email: login,
 		password: 'secret',
-		remember: true
+		persistent: true
 	})
 	.expectStatus(200)
 	.expectJSON({
 		status: 'success'
 	})
+	.afterJSON(function(json) {
+
+		frisby.create('test authentication')
+			.get(server + '/accounts/profile')
+			.addHeaders({
+				'X-Access-Token': json.token
+			})
+			.expectStatus(200)
+			.expectJSON({
+				status: 'success'
+			})
+			.toss();
+
+	})
 	.toss();
+
+
 
 
 

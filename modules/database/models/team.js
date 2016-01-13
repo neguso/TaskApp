@@ -10,9 +10,9 @@ var logger = require('../../logger'),
 module.exports = function(connection)
 {
 	var teamSchema = new Schema({
-		name: Schema.Types.String,
-		description: Schema.Types.String,
-		access: { type: Schema.Types.String, enum: ['public', 'managed', 'private'] },
+		name: { type: Schema.Types.String, minlength: 1, maxlength: 64, required: true },
+		description: { type: Schema.Types.String, maxlength: 512 },
+		access: { type: Schema.Types.String, default: 'private', required: true, enum: ['public', 'managed', 'private'] },
 		organization: { type: Schema.Types.ObjectId, ref: 'Organization' },
 		team: { type: Schema.Types.ObjectId, ref: 'Team' },
 		teams: [{ type: Schema.Types.ObjectId, ref: 'Team' }]

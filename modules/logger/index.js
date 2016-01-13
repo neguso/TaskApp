@@ -5,17 +5,24 @@ var	util = require('util'),
 
 module.exports = {
 
-	log: function()
-	{
-		var now = new Date(), t = { y: now.getFullYear(), m: now.getMonth(), d: now.getDate(), h: now.getHours(), mi: now.getMinutes(), s: now.getSeconds(), ms: now.getMilliseconds() };
-		var timestamp = util.format('[%s-%s-%s %s:%s:%s.%s]', t.y, pad2(t.m), pad2(t.d), pad2(t.h), pad2(t.mi), pad2(t.s), pad3(t.ms));
+	error: log,
 
-		arguments[0] = util.format('%s %d: ', timestamp, process.pid) + arguments[0];
-		console.log.apply(this, arguments);
-	}	
+	warning: log,
+
+	info: log,
+
+	log: log
 
 };
 
+function log()
+{
+	var now = new Date(), t = { y: now.getFullYear(), m: now.getMonth(), d: now.getDate(), h: now.getHours(), mi: now.getMinutes(), s: now.getSeconds(), ms: now.getMilliseconds() };
+	var timestamp = util.format('[%s-%s-%s %s:%s:%s.%s]', t.y, pad2(t.m), pad2(t.d), pad2(t.h), pad2(t.mi), pad2(t.s), pad3(t.ms));
+
+	arguments[0] = util.format('%s %d: ', timestamp, process.pid) + arguments[0];
+	console.log.apply(this, arguments);
+}
 
 function pad2(n)
 {

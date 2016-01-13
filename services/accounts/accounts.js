@@ -67,7 +67,7 @@ module.exports = {
 	{
 		var email = validator.toString(req.body.email),
 				password = validator.toString(req.body.password),
-				remember = validator.toBoolean(req.body.remember);
+				persistent = validator.toBoolean(req.body.persistent);
 
 		// validate email
 		if(!validator.isEmail(email) || email.length === 0 || email.length > 128)
@@ -76,7 +76,7 @@ module.exports = {
 		database.main.open().then((connection) => {
 			
 			// check credentials
-			database.main.users.findOne({ email: email, password: password }, 'email, firstname, lastname', { lean: true }, (err, user) => {
+			database.main.users.findOne({ email: email, password: password }, 'email firstname lastname', { lean: true }, (err, user) => {
 				if(err) return next(new errors.Internal(err.message));
 
 				if(user === null)
@@ -86,7 +86,7 @@ module.exports = {
 					return next();
 				}
 
-				if(remember)
+				if(persistent)
 				{
 					var token = maketoken(), expires = new Date(); expires.setDate(expires.getDate() + 14);
 
@@ -99,14 +99,14 @@ module.exports = {
 							// create session
 							var batch = client.batch();
 							batch.hmset(token + ':auth', { user: user._id.toString() });
-							batch.expire(token + ':auth', 30 * 60);
+							batch.expire(token + ':auth', 1800);
 							batch.exec((err, results) => {
 								if(err) return next(new errors.Internal(err.message));
 
 								res.json({
 									status: 'success',
 									token: token,
-									expires: expires,
+									expires: 1800,
 									account: { email: user.email, firstname: user.firstname, lastname: user.lastname }
 								});
 								res.end();
@@ -172,6 +172,9 @@ module.exports = {
 	// GET /accounts/profile
 	getProfile: function(req, res, next)
 	{
+		res.send({ status: 'success' });
+		res.end();
+
 		next();
 	},
 

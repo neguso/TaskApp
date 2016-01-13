@@ -19,7 +19,7 @@ database.main.open().then((connection) => {
 			if(err) return console.log('error finding user by id');
 			assert(findUser !== null, 'should not be null');
 		});
-		
+
 		/// retrieve one document by condition
 		database.main.users.findOne({ _id: id }, (err, findUser) => {
 			if(err) return console.log('error finding users by condition');
@@ -29,7 +29,7 @@ database.main.open().then((connection) => {
 		/// retrieve documents by condition
 		database.main.users.find({ firstname: 'John' }, (err, findUsers) => {
 			if(err) return console.log('error finding users with criteria');
-			assert(findUsers.length === 1, 'should find 1 user');
+			assert(findUsers.length > 0, 'should find 1 user');
 		});
 
 		/// retrieve documents by condition with pagination
@@ -44,8 +44,37 @@ database.main.open().then((connection) => {
 			assert(findUsers.length > 0, 'should find users');
 		});
 
-		// population
-		//todo:
+
+		/// populate documents
+		database.main.organizations.create({ name: 'my organization' }, (err, newOrganization) => {
+			if(err) return console.log('error creating organization');
+			database.main.teams.create({ name: 'my team', organization: newOrganization.id }, (err, newTeam) => {
+				if(err) return console.log('error creating team');
+
+				// populate using model
+				database.main.teams.findOne({ _id: newTeam.id }, null, { lean: true }, (err, team) => {
+					if(err) return console.log('error reading team');
+					database.main.teams.populate(team, { path: 'organization', select: 'name', options: { lean: true } }, (err, populatedTeam) => {
+						if(err) return console.log('error populating team');
+						assert(populatedTeam.organization !== null && populatedTeam.organization.name === 'my organization');
+					});
+				});
+
+				// populate using document
+				newTeam.populate({ path: 'organization', select: 'name', options: { lean: true } }, (err, populatedTeam) => {
+					if(err) return console.log('error populating team');
+					assert(populatedTeam.organization !== null && populatedTeam.organization.name === 'my organization');
+				});
+
+				// find & populate
+				database.main.teams.findOne({ _id: newTeam.id }, null, { lean: true }).populate({ path: 'organization', select: 'name', options: { lean: true } }).exec((err, populatedTeam) => {
+					if(err) return console.log('error populating team');
+					assert(populatedTeam.organization !== null && populatedTeam.organization.name === 'my organization');
+				});
+
+			});
+		});
+
 
 		/// update document
 		newUser.lastname = 'Updated';

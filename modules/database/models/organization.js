@@ -10,11 +10,11 @@ var logger = require('../../logger'),
 module.exports = function(connection)
 {
 	var organizationSchema = new Schema({
-		name: { type: Schema.Types.String },
-		description: { type: Schema.Types.String }
+		name: { type: Schema.Types.String, minlength: 1, maxlength: 64, required: true },
+		description: { type: Schema.Types.String, maxlength: 512 }
 	}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });
 
-	organizationSchema.index({ name: 1 }, { name: 'ix_name' });
+	//organizationSchema.index({ name: 1 }, { name: 'ix_name' });
 
 	organizationSchema.pre('remove', true, function(next, done) {
 		beforeremove(connection, [this.id], (err, counts) => {
