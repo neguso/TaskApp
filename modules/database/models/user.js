@@ -11,7 +11,7 @@ module.exports = function(connection)
 {
 	var userSchema = new Schema({
 		email: { type: Schema.Types.String, minlength: 1, maxlength: 128, required: true },
-		password: { type: Schema.Types.String, minlength: 1, maxlength: 32, required: true },
+		password: { type: Schema.Types.String, minlength: 1, maxlength: 32 },
 		firstname: { type: Schema.Types.String, minlength: 1, maxlength: 32, required: true },
 		lastname: { type: Schema.Types.String, minlength: 1, maxlength: 32 }
 	}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });

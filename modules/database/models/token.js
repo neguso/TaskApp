@@ -7,9 +7,9 @@ var mongoose = require('mongoose'),
 module.exports = function(connection)
 {
 	var tokenSchema = new Schema({
-		token: Schema.Types.String,
-		user: { type: Schema.Types.ObjectId, ref: 'User' },
-		expires: { type: Schema.Types.Date, index: { name: 'ix_expires', expires: 0 }}
+		token: { type: Schema.Types.String, required: true },
+		user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+		expires: { type: Schema.Types.Date, required: true, index: { name: 'ix_expires', expires: 0 }}
 	});
 
 	tokenSchema.index({ token: 1 }, { name: 'ix_token', unique: true });
