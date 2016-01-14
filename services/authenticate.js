@@ -44,7 +44,7 @@ module.exports = function(req, res, next)
 								if(err) return next(new errors.Internal(err.message));
 
 								// init user, session
-								req.user = new User(info.user);
+								req.user = new User(doc.user._id.toString());
 								req.session = new Session(token, client);
 
 								next();
@@ -101,11 +101,13 @@ User.prototype.id = null;
 
 function Session(token, storage)
 {
-	this.key = token + ':session';
+	this.token = token;
 	this.storage = storage;
+
+	this.key = this.token + ':session';
 }
 
-Session.prototype.key = null;
+Session.prototype.token = null;
 Session.prototype.storage = null;
 
 Session.prototype.set = function(field, value, callback)

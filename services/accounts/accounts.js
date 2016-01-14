@@ -160,7 +160,22 @@ module.exports = {
 	// POST /accounts/logout
 	logout: function(req, res, next)
 	{
-		next();
+
+		database.main.open().then((connection) => {
+
+			database.main.tokens.remove({ token: req.Session.token }, );ssssssssssssssssssss
+
+			valuestore.session.open().then((client) => {
+				
+			}, (err) => {
+				// session error
+				next(new errors.Internal(err.message));
+			});
+
+		}, (err) => {
+			// database error
+			next(new errors.Internal(err.message));
+		});
 	},
 
 	// GET /accounts/status
