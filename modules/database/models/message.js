@@ -58,7 +58,7 @@ module.exports = function(connection)
 
 
 function afterremove(connection, condition, callback)
-{
+{//todo: stupid, files has been already deleted
 	connection.model('Messages').find(condition, 'files', { lean: true }, (err, messages) => {
 		if(err) return callback(err);
 		
@@ -67,6 +67,6 @@ function afterremove(connection, condition, callback)
 			keys.push(message.files.map((file) => { return file.key; }));
 		});
 		
-		//todo: delete files
+		//todo: delete files log errors but don't throws
 	});
 }

@@ -15,6 +15,7 @@ app.use(require('../monitor.js').logging);
 
 // handle authentication
 app.all('/accounts/logout', require('../authenticate.js'));
+app.all('/accounts/status', require('../authenticate.js'));
 app.all('/accounts/profile', require('../authenticate.js'));
 
 // handle application logic

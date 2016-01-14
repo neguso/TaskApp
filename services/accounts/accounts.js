@@ -1,7 +1,5 @@
 // accounts service / implementation
 
-var jwt = require('jwt-simple');
-
 var database = require('../../modules/database'),
 		valuestore = require('../../modules/valuestore/index.js'),
 		validator = require('../../modules/validator'),
@@ -107,7 +105,7 @@ module.exports = {
 									status: 'success',
 									token: token,
 									expires: 1800,
-									account: { email: user.email, firstname: user.firstname, lastname: user.lastname }
+									user: { email: user.email, firstname: user.firstname, lastname: user.lastname }
 								});
 								res.end();
 								next();
@@ -124,12 +122,12 @@ module.exports = {
 				{
 					valuestore.session.open().then((client) => {
 
-						var token = maketoken(), expires = new Date(); expires.setMinutes(expires.getMinutes() + 30);
+						var token = maketoken(), expires = new Date(); expires.setSeconds(expires.getSeconds() + 1800);
 
 						// create session
 						var batch = client.batch();
 						batch.hmset(token + ':auth', { user: user._id.toString() });
-						batch.expire(token + ':auth', 30 * 60);
+						batch.expire(token + ':auth', 1800);
 						batch.exec((err, results) => {
 							if(err) return next(new errors.Internal(err.message));
 
@@ -137,7 +135,7 @@ module.exports = {
 								status: 'success',
 								token: token,
 								expires: expires,
-								account: { email: user.email, firstname: user.firstname, lastname: user.lastname }
+								user: { email: user.email, firstname: user.firstname, lastname: user.lastname }
 							});
 							res.end();
 							next();
@@ -160,16 +158,31 @@ module.exports = {
 	// POST /accounts/logout
 	logout: function(req, res, next)
 	{
-
 		database.main.open().then((connection) => {
 
-			database.main.tokens.remove({ token: req.Session.token }, );ssssssssssssssssssss
+			// remove persistent token
+			database.main.tokens.remove({ token: req.session.token }, (err) => {
+				if(err) return next(new errors.Internal(err.message));
 
-			valuestore.session.open().then((client) => {
-				
-			}, (err) => {
-				// session error
-				next(new errors.Internal(err.message));
+				valuestore.session.open().then((client) => {
+
+					// remove user, session
+					client.del(req.session.token + ':auth', req.session.token + ':session', (err, results) => {
+						if(err) return next(new errors.Internal(err.message));
+
+						req.user = null;
+						req.session = null;
+
+						res.json({ status: 'success' });
+						res.end();
+						next();
+					});
+
+				}, (err) => {
+					// session error
+					next(new errors.Internal(err.message));
+				});				
+
 			});
 
 		}, (err) => {
@@ -181,28 +194,44 @@ module.exports = {
 	// GET /accounts/status
 	getStatus: function(req, res, next)
 	{
-		next();
+		database.main.open().then((connection) => {
+
+			database.main.tokens.findOne({ token: req.session.token }, (err, token) => {
+				if(err) return next(new errors.Internal(err.message));
+
+				var expires = new Date(); expires.setDate(expires.getDate() + 14);
+				token.expires = expires;
+				token.save((err, doc, numAffected) => {
+					if(err) return next(new errors.Internal(err.message));
+
+					res.send({ status: 'success' });
+					res.end();
+					next();
+				});
+			});
+
+		}, (err) => {
+			// database error
+			next(new errors.Internal(err.message));
+		});
 	},
 
 	// GET /accounts/profile
 	getProfile: function(req, res, next)
 	{
-		res.send({ status: 'success' });
-		res.end();
-
-		next();
+		throw new Error('Not implemented.');
 	},
 
 	// POST /accounts/profile
 	updateProfile: function(req, res, next)
 	{
-		next();
+		throw new Error('Not implemented.');
 	},
 
 	// POST /accounts/invite
 	invite: function(req, res, next)
 	{
-		next();
+		throw new Error('Not implemented.');
 	}
 
 };

@@ -8,6 +8,11 @@ database.main.open().then((connection) => {
 
 	logger.log('main database models: ', connection.modelNames());
 
+	// use the following to access models:
+	//   connection.model("User")
+	//   database.main.users
+
+
 	/// create new document
 	database.main.users.create({ email: 'john@example.com - ' + Math.floor(Math.random() * 100), firstname: 'John', password: 'secret' }, (err, newUser) => {
 		if(err) return console.log('error creating new user');

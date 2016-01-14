@@ -1,5 +1,3 @@
-var jwt = require('jwt-simple');
-
 var config = require('../config.js'),
 		errors = require('./errors.js'),
 		valuestore = require('../modules/valuestore'),
@@ -28,29 +26,28 @@ module.exports = function(req, res, next)
 					database.main.open().then((connection) => {
 
 						// look for persisted token
-						
 						database.main.tokens.findOne({ token: token }, 'user', { lean: true })
 							.populate({ path: 'user', select: 'email firstname lastname', options: { lean: true } })
-							.exec((err, doc) => {
+							.exec((err, persisted) => {
 							if(err) return next(new errors.Internal(err.message));
 
-							if(doc === null) return next(new errors.Unauthorized('Invalid token'));
+							if(persisted === null) return next(new errors.Unauthorized('Invalid token'));
 
 							// create session
 							var batch = client.batch();
-							batch.hmset(token + ':auth', { user: doc.user._id.toString() });
+							batch.hmset(token + ':auth', { user: persisted.user._id.toString() });
 							batch.expire(token + ':auth', 1800);
 							batch.exec((err, results) => {
 								if(err) return next(new errors.Internal(err.message));
 
 								// init user, session
-								req.user = new User(doc.user._id.toString());
+								req.user = new User(persisted.user._id.toString());
 								req.session = new Session(token, client);
 
 								next();
 
-								logger.info('new session created');
-							});							
+								logger.info('auth: new session');
+							});
 							
 						});
 
@@ -68,13 +65,13 @@ module.exports = function(req, res, next)
 					req.session = new Session(token, client);
 
 					// update session expiration, don't wait for answer
-					client.expire(token + ':auth', 30 * 60, (err, result) => {
+					client.expire(token + ':auth', 1800, (err, result) => {
 						if(err) logger.warning('error updating key expiration: %s', err.message);
 					});
 
 					next();
 
-					logger.info('existing session extended');
+					logger.info('auth: existing session');
 				}
 			});
 
