@@ -196,18 +196,33 @@ module.exports = {
 	{
 		database.main.open().then((connection) => {
 
-			database.main.tokens.findOne({ token: req.session.token }, (err, token) => {
+			database.main.tokens.findOne({ token: req.session.token }).populate({ path: 'user', select: 'email firstname lastname' }).exec((err, token) => {
 				if(err) return next(new errors.Internal(err.message));
 
-				var expires = new Date(); expires.setDate(expires.getDate() + 14);
-				token.expires = expires;
-				token.save((err, doc, numAffected) => {
-					if(err) return next(new errors.Internal(err.message));
-
-					res.send({ status: 'success' });
+				if(token === null)
+				{
+					res.json({ status: 'fail', reason: 'token not found' });
 					res.end();
-					next();
-				});
+					next();	
+				}
+				else
+				{
+					// update token ttl
+					var expires = new Date(); expires.setDate(expires.getDate() + 14);
+					token.expires = expires;
+					token.save((err, doc, numAffected) => {
+						if(err) return next(new errors.Internal(err.message));
+
+						res.send({
+							status: 'success',
+							expires: expires,
+							user: { email: token.user.email, firstname: token.user.firstname, lastname: token.user.lastname }
+						});
+						res.end();
+						next();
+					});
+				}
+
 			});
 
 		}, (err) => {
@@ -219,7 +234,37 @@ module.exports = {
 	// GET /accounts/profile
 	getProfile: function(req, res, next)
 	{
-		throw new Error('Not implemented.');
+		var all = ['email', 'firstname', 'lastname', 'avatar'], fields = new Array();
+		validator.toString(req.query.fields).trim().split(',').forEach((item) => {
+			if(all.indexOf(item.trim().toLowercase()) !== -1) fields.push(item.trim().toLowercase());
+		});
+		if(fields.length === 0)
+			fields = ['email', 'firstname', 'lastname'];
+
+		database.main.open().then((connection) => {
+
+			database.main.users.findOne({ _id: req.user.id }, null, { lean: true }, (err, user) => {
+				if(err) return next(new errors.Internal(err.message));
+
+				if(user === null)
+				{
+					return next(new errors.NotFound('Profile not found'));
+				}
+				else
+				{
+					res.json({
+						status: 'success',
+						user: {}
+					});
+					res.end();
+					next();
+				}
+			});
+
+		}, (err) => {
+			// database error
+			next(new errors.Internal(err.message));
+		});
 	},
 
 	// POST /accounts/profile
@@ -245,3 +290,10 @@ function maketoken()
 		ary[i] = chars.charAt(Math.floor(Math.random() * chars.length));
 	return ary.join('');
 }
+
+function extract(source, fields, map)
+{
+	var result = {};
+	fields.forEach((field) => { result[field] = source[field]; });
+}
+
