@@ -15,7 +15,7 @@ module.exports = function(req, res, next)
 
 			// look for session
 			client.hgetall(token + ':auth', (err, info) => {
-				if(err) return next(new errors.Internal(err.message));
+				if(err) return next(new errors.Internal());
 
 				// info = { user: <objectid> }
 
@@ -29,16 +29,16 @@ module.exports = function(req, res, next)
 						database.main.tokens.findOne({ token: token }, 'user', { lean: true })
 							.populate({ path: 'user', select: 'email firstname lastname', options: { lean: true } })
 							.exec((err, persisted) => {
-							if(err) return next(new errors.Internal(err.message));
+							if(err) return next(new errors.Internal());
 
-							if(persisted === null) return next(new errors.Unauthorized('Invalid token'));
+							if(persisted === null) return next(new errors.Unauthorized());
 
 							// create session
 							var batch = client.batch();
 							batch.hmset(token + ':auth', { user: persisted.user._id.toString() });
 							batch.expire(token + ':auth', 1800);
 							batch.exec((err, results) => {
-								if(err) return next(new errors.Internal(err.message));
+								if(err) return next(new errors.Internal());
 
 								// init user, session
 								req.user = new User(persisted.user._id.toString());
@@ -53,7 +53,7 @@ module.exports = function(req, res, next)
 
 					}, (err) => {
 						// database error
-						next(new errors.Internal(err.message));
+						next(new errors.Internal());
 					});
 				}
 				else
@@ -77,13 +77,13 @@ module.exports = function(req, res, next)
 
 		}, (err) => {
 			// session error
-			next(new errors.Internal(err.message));
+			next(new errors.Internal());
 		});
 	}
 	else
 	{
 		// token not present in request
-		next(new errors.Unauthorized('Token not supplied'));
+		next(new errors.Unauthorized());
 	}
 };
 

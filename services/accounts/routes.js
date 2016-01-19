@@ -12,7 +12,7 @@ router.post('/logout', accounts.logout);
 router.get('/status', accounts.getStatus);
 
 router.get('/profile', accounts.getProfile);
-router.post('/profile', accounts.updateProfile);
+router.put('/profile', accounts.updateProfile);
 router.post('/invite', accounts.invite);
 
 

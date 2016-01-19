@@ -24,10 +24,7 @@ app.use('/accounts', require('./routes.js'));
 // handle unknown routes
 app.use((req, res, next) => {
 	if(res.headersSent) return next();
-	res.status(400);
-	res.json({ code: 'Bad Request' });
-	res.end();
-	next();
+	next(new errors.BadRequest());
 });
 
 // handle exceptions 
@@ -36,13 +33,13 @@ app.use((err, req, res, next) => {
 	if(err instanceof errors.HttpError)
 	{
 		res.status(err.status);
-		res.json({ code: err.code, message: err.message });
+		res.json(err.json());
 		res.end();
 	}
 	else
 	{
 		res.status(500);
-		res.json({ code: 'Unhandled Exception', message: err.message });
+		res.json({ error: 'InternalError' });
 		res.end();
 	}
 	next(err);

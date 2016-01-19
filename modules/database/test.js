@@ -8,7 +8,7 @@ database.main.open().then((connection) => {
 
 	logger.log('main database models: ', connection.modelNames());
 
-	// use the following to access models:
+	// how to access models:
 	//   connection.model("User")
 	//   database.main.users
 
@@ -83,7 +83,7 @@ database.main.open().then((connection) => {
 
 		/// update document
 		newUser.lastname = 'Updated';
-		newUser.save((err, updateUser) => {
+		newUser.save((err, updateUser, numAffected) => {
 			if(err) return console.log('error deleting user by document');
 
 			database.main.users.findById(id, (err, findUser) => {
@@ -91,6 +91,13 @@ database.main.open().then((connection) => {
 				assert(findUser.lastname === 'Updated', 'user should be updated');
 			});
 		});
+
+
+		/// find & update
+
+
+		/// find & delete
+
 
 	});
 
@@ -106,7 +113,7 @@ database.main.open().then((connection) => {
 	/// remove document by id using model.delete()
 	database.main.users.create({ email: 'deletebyid@example.com', firstname: 'Joe', password: 'secret' }, (err, newUser) => {
 		if(err) return console.log('error creating user');
-		database.main.users.deleteById(newUser.id, (err, count) => {
+		database.main.users.deleteById(newUser.id, (err, numAffected) => {
 			if(err) return console.log('error deleting user by id');
 		});
 	});
@@ -114,9 +121,9 @@ database.main.open().then((connection) => {
 	/// remove documents by condition using model.delete()
 	database.main.users.create([{ email: 'deletebycondition1@example.com', firstname: 'a', password: 'secret' }, { email: 'deletebycondition2@example.com', firstname: 'a', password: 'secret' }], (err, newUsers) => {
 		if(err) return console.log('error creating users');
-		database.main.users.delete({ firstname: 'a' }, (err, count) => {
+		database.main.users.delete({ firstname: 'a' }, (err, numAffected) => {
 			if(err) return console.log('error deleting user with criteria');
-			assert(count === 2, 'invalid count');
+			assert(numAffected === 2, 'invalid number of records affected');
 		});
 	});
 	
@@ -155,13 +162,6 @@ database.main.open().then((connection) => {
 				});
 			});
 		});
-	});
-
-
-	// expires
-	database.main.tokens.create({ token: '12345', expires: new Date(2016, 0, 12, 22, 12) }, (err, token) => {
-		if(err) return console.log('error creating token');
-		
 	});
 
 
