@@ -1,4 +1,4 @@
-// accounts service / public interface
+// organizations service / public interface
 
 var express = require('express');
 
@@ -15,12 +15,10 @@ app.use(require('../monitor.js').performance());
 app.use(require('../monitor.js').logging());
 
 // handle authentication
-app.all('/accounts/logout', require('../authenticate.js'));
-app.all('/accounts/status', require('../authenticate.js'));
-app.all('/accounts/profile', require('../authenticate.js'));
+app.all('/organizations/*', require('../authenticate.js'));
 
 // handle application logic
-app.use('/accounts', require('./routes.js'));
+app.use('/', require('./routes.js'));
 
 // handle unknown routes
 app.use((req, res, next) => {
@@ -47,6 +45,6 @@ app.use((err, req, res, next) => {
 });
 
 
-var server = app.listen(config.accounts.port, () => {
-  console.log('Accounts service listening on port ' + server.address().port);
+var server = app.listen(config.organizations.port, () => {
+  console.log('Organizations service listening on port ' + server.address().port);
 });

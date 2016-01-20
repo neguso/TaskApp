@@ -339,8 +339,3 @@ module.exports = {
 	}
 
 };
-
-
-
-//todo: return error if fields contains invalid names
-

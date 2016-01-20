@@ -13,9 +13,14 @@ module.exports = {
 	accounts: {
 		port: 9001,
 		timeout: {
-			session: 30,
-			ticket: 14
+			session: 30, // minutes
+			ticket: 14 // days
 		}
+	},
+
+	// organizations service
+	organizations: {
+		port: 9002
 	},
 
 	// files service

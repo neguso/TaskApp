@@ -38,8 +38,13 @@ exports.token = {
 };
 
 
-
 exports.parameter = {
+
+	isvalidfield: function(field, map)
+	{
+		field = field.toLowerCase();
+		return map.findIndex((m) => { return m.startsWith(field + ':'); }) !== -1;
+	},
 
 	/// Get invalid fields according to the map.
 	getinvalidfields: function(fields, map)
@@ -104,7 +109,6 @@ exports.parameter = {
 };
 
 
-
 exports.validator = {
 
 	// validators //
@@ -133,6 +137,15 @@ exports.validator = {
 		return typeof value === 'string' && /[a-zA-Z0-9]/.test(value);
 	},
 
+	isInt: function(value, options)
+	{
+		options = options || {};
+		var n = Number.parseInt(value, 10);
+		return n.toString() == value
+			&& ((options.hasOwnProperty('min') && n >= options.min) || !options.hasOwnProperty('min'))
+			&& ((options.hasOwnProperty('max') && n <= options.max) || !options.hasOwnProperty('max')); 
+	},
+
 
 	// sanitizers //
 	toBoolean: function toBoolean(value)
@@ -148,6 +161,11 @@ exports.validator = {
 		if(typeof value === 'undefined' || value === null || isNaN(value)) return '';
 		if(typeof value.toString === 'function') return value.toString();
 		return value + '';
+	},
+
+	toInt: function(value)
+	{
+		return Number.parseInt(value, 10);
 	}
 
 };
