@@ -32,23 +32,6 @@ exports.organizations = {
 			datafields.push('email', 'firstname', 'lastname');
 
 
-		try
-		{
-			var validator = util.validator.create(); 
-			validator.optional(req.query.offset).number({ min: 0, max: 100 });
-			validator.required(req.query.offset).number({ min: 0, max: 100 });
-			validator.optional(req.query.sort).field(map);
-			
-			//int().range(0, 100).val()
-			//string().length(0, 100).values([]).isEmail().val()
-			//fields().values([]).val()
-			
-		}
-		catch(err)
-		{
-			
-		}
-
 	},
 
 	get: function(req, res, next)

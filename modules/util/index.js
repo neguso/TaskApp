@@ -1,3 +1,5 @@
+var util = require('util');
+
 
 exports.password = {
 
@@ -166,6 +168,259 @@ exports.validator = {
 	toInt: function(value)
 	{
 		return Number.parseInt(value, 10);
+	},
+
+
+	//
+
+	create: function()
+	{
+		return new PresenceValidator(new ParametersValidator());
 	}
 
+};
+
+
+function ParametersValidator()
+{
+	this.errors = [];
+}
+ParametersValidator.prototype.errors = null;
+ParametersValidator.prototype.add = function(name)
+{
+	if(this.errors.indexOf(name) === -1)
+		this.errors.push(name);
+}
+
+
+function PresenceValidator(validator)
+{
+	this.validator = validator;
+}
+PresenceValidator.prototype.optional = function(value, name) {
+	return new TypeValidator(this.validator, value, name, typeof value === 'undefined');
+};
+PresenceValidator.prototype.required = function(value, name) {
+	if(typeof value === 'undefined')
+		this.validator.add(name);
+	return new TypeValidator(this.validator, value, name, false);
+};
+PresenceValidator.prototype.errors = function()
+{
+	return this.validator.errors;
+}
+
+function BaseValidator(validator, value, name, ignore)
+{
+	this.validator = validator;
+	this.value = value;
+	this.name = name;
+	this.ignore = ignore;
+	this.valid = (validator.errors.length === 0);
+}
+BaseValidator.prototype.invalid = function()
+{
+	if(!this.valid) return;
+	this.valid = false;
+	this.validator.add(this.name);
+};
+
+
+function TypeValidator(validator, value, name, ignore)
+{
+	BaseValidator.call(this, validator, value, name, ignore);
+}
+util.inherits(TypeValidator, BaseValidator);
+TypeValidator.prototype.int = function()
+{
+	if(!this.ignore && this.valid)
+	{
+		if(!exports.validator.isInt(this.value))
+			this.invalid();
+	}
+	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+};
+TypeValidator.prototype.string = function()
+{
+	if(!this.ignore && this.valid)
+	{
+		if(!exports.validator.isString(this.value))
+			this.invalid();
+	}
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+TypeValidator.prototype.val = function()
+{
+	return this.value;
+};
+
+
+function IntValidator(validator, value, name, ignore)
+{
+	BaseValidator.call(this, validator, value, name, ignore);
+}
+util.inherits(IntValidator, BaseValidator);
+IntValidator.prototype.val = function()
+{
+	return exports.validator.toInt(this.value);
+};
+IntValidator.prototype.min = function(min)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isInt(this.value))
+		{
+			var v = exports.validator.toInt(this.value);
+			if(v < min)
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+};
+IntValidator.prototype.max = function(max)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isInt(this.value))
+		{
+			var v = exports.validator.toInt(this.value);
+			if(v > max)
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+};
+IntValidator.prototype.range = function(min, max)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isInt(this.value))
+		{
+			var v = exports.validator.toInt(this.value);
+			if(v < min || v > max)
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+};
+
+
+function StringValidator(validator, value, name, ignore)
+{
+	BaseValidator.call(this, validator, value, name, ignore);
+}
+util.inherits(StringValidator, BaseValidator);
+StringValidator.prototype.trim = function()
+{
+	if(exports.validator.isString(this.value))
+		this.value = this.value.trim();
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.toLowerCase = function()
+{
+	if(exports.validator.isString(this.value))
+		this.value = this.value.toLowerCase();
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.toUpperCase = function()
+{
+	if(exports.validator.isString(this.value))
+		this.value = this.value.toUpperCase();
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.minlength = function(min)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isString(this.value))
+		{
+			var v = exports.validator.toString(this.value);
+			if(v.length < min)
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.maxlength = function(max)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isString(this.value))
+		{
+			var v = exports.validator.toString(this.value);
+			if(v.length > max)
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.length = function(min, max)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isString(this.value))
+		{
+			var v = exports.validator.toString(this.value);
+			if(v.length < min || v.length > max)
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.match = function(regexp)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isString(this.value))
+		{
+			var v = exports.validator.toString(this.value);
+			if(!regexp.test(v))
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.values = function(ary)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isString(this.value))
+		{
+			var v = exports.validator.toString(this.value);
+			if(ary.indexOf(v) === -1)
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+};
+StringValidator.prototype.isEmail = function(ary)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(exports.validator.isString(this.value))
+		{
+			var v = exports.validator.toString(this.value);
+			if(!exports.validator.isEmail(v))
+				this.invalid();
+		}
+		else
+			this.invalid();
+	}
+	return new StringValidator(this.validator, this.value, this.name, this.ignore);
 };
