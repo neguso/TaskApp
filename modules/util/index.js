@@ -167,6 +167,7 @@ exports.validator = {
 
 	toInt: function(value)
 	{
+		if(typeof value === 'number') return Math.trunc(value);
 		return Number.parseInt(value, 10);
 	},
 
@@ -249,6 +250,15 @@ TypeValidator.prototype.string = function()
 	}
 	return new StringValidator(this.validator, this.value, this.name, this.ignore);
 };
+TypeValidator.prototype.fields = function(separator)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(!exports.validator.isString(this.value))
+			this.invalid();
+	}
+	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, separator);
+};
 TypeValidator.prototype.val = function()
 {
 	return this.value;
@@ -316,19 +326,23 @@ function StringValidator(validator, value, name, ignore)
 	BaseValidator.call(this, validator, value, name, ignore);
 }
 util.inherits(StringValidator, BaseValidator);
+StringValidator.prototype.val = function()
+{
+	return exports.validator.toString(this.value);
+};
 StringValidator.prototype.trim = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.trim();
 	return new StringValidator(this.validator, this.value, this.name, this.ignore);
 };
-StringValidator.prototype.toLowerCase = function()
+StringValidator.prototype.toLower = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.toLowerCase();
 	return new StringValidator(this.validator, this.value, this.name, this.ignore);
 };
-StringValidator.prototype.toUpperCase = function()
+StringValidator.prototype.toUpper = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.toUpperCase();
@@ -371,8 +385,16 @@ StringValidator.prototype.length = function(min, max)
 		if(exports.validator.isString(this.value))
 		{
 			var v = exports.validator.toString(this.value);
-			if(v.length < min || v.length > max)
-				this.invalid();
+			if(arguments.length === 2)
+			{
+				if(v.length < min || v.length > max)
+					this.invalid();
+			}
+			else if(arguments.length === 1)
+			{
+				if(v.length !== min)
+					this.invalid();
+			}
 		}
 		else
 			this.invalid();
@@ -424,3 +446,39 @@ StringValidator.prototype.isEmail = function(ary)
 	}
 	return new StringValidator(this.validator, this.value, this.name, this.ignore);
 };
+
+
+function FieldsValidator(validator, value, name, ignore, separator)
+{
+	BaseValidator.call(this, validator, value, name, ignore);
+	this.separator = separator || ',';
+}
+util.inherits(FieldsValidator, BaseValidator);
+FieldsValidator.prototype.val = function()
+{
+	var val = exports.validator.toString(this.value).trim();
+	if(val.length === 0) return [];
+	return val.split(new RegExp('\\s*' + this.separator + '\\s*'));
+};
+FieldsValidator.prototype.toLower = function()
+{
+	if(exports.validator.isString(this.value))
+		this.value = this.value.toLowerCase();
+	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, this.separator);
+};
+FieldsValidator.prototype.toUpper = function()
+{
+	if(exports.validator.isString(this.value))
+		this.value = this.value.toUpperCase();
+	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, this.separator);
+};
+FieldsValidator.prototype.values = function(ary)
+{
+	if(!this.ignore && this.valid)
+	{
+		if(this.val().findIndex((field) => { return ary.indexOf(field) === -1; }) !== -1)
+			this.invalid();
+	}
+	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, this.separator);
+};
+
