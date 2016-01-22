@@ -287,7 +287,7 @@ IntValidator.prototype.min = function(min)
 		else
 			this.invalid();
 	}
-	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 IntValidator.prototype.max = function(max)
 {
@@ -302,7 +302,7 @@ IntValidator.prototype.max = function(max)
 		else
 			this.invalid();
 	}
-	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 IntValidator.prototype.range = function(min, max)
 {
@@ -317,7 +317,7 @@ IntValidator.prototype.range = function(min, max)
 		else
 			this.invalid();
 	}
-	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 
 
@@ -334,19 +334,19 @@ StringValidator.prototype.trim = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.trim();
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.toLower = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.toLowerCase();
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.toUpper = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.toUpperCase();
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.minlength = function(min)
 {
@@ -361,7 +361,7 @@ StringValidator.prototype.minlength = function(min)
 		else
 			this.invalid();
 	}
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.maxlength = function(max)
 {
@@ -376,7 +376,7 @@ StringValidator.prototype.maxlength = function(max)
 		else
 			this.invalid();
 	}
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.length = function(min, max)
 {
@@ -399,7 +399,7 @@ StringValidator.prototype.length = function(min, max)
 		else
 			this.invalid();
 	}
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.match = function(regexp)
 {
@@ -414,7 +414,7 @@ StringValidator.prototype.match = function(regexp)
 		else
 			this.invalid();
 	}
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.values = function(ary)
 {
@@ -429,7 +429,7 @@ StringValidator.prototype.values = function(ary)
 		else
 			this.invalid();
 	}
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 StringValidator.prototype.isEmail = function(ary)
 {
@@ -444,7 +444,7 @@ StringValidator.prototype.isEmail = function(ary)
 		else
 			this.invalid();
 	}
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return this;
 };
 
 
@@ -464,13 +464,13 @@ FieldsValidator.prototype.toLower = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.toLowerCase();
-	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, this.separator);
+	return this;
 };
 FieldsValidator.prototype.toUpper = function()
 {
 	if(exports.validator.isString(this.value))
 		this.value = this.value.toUpperCase();
-	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, this.separator);
+	return this;
 };
 FieldsValidator.prototype.values = function(ary)
 {
@@ -479,6 +479,6 @@ FieldsValidator.prototype.values = function(ary)
 		if(this.val().findIndex((field) => { return ary.indexOf(field) === -1; }) !== -1)
 			this.invalid();
 	}
-	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, this.separator);
+	return this;
 };
 
