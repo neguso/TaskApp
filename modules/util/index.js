@@ -48,7 +48,7 @@ exports.parameter = {
 		return map.findIndex((m) => { return m.startsWith(field + ':'); }) !== -1;
 	},
 
-	/// Get invalid fields according to the map.
+	/// Get invalid fields according to the map, removes duplicates
 	getinvalidfields: function(fields, map)
 	{
 		var ary = [];
@@ -56,7 +56,7 @@ exports.parameter = {
 		return ary.filter((field, index, array) => { return map.findIndex((value) => { return value.startsWith(field + ':'); }) === -1; });
 	},
 
-	/// Filter valid fields according to the map and removes duplicates.
+	/// Filter valid fields according to the map, removes duplicates.
 	getvalidfields: function(fields, map)
 	{
 		var ary = [];
@@ -109,6 +109,7 @@ exports.parameter = {
 	}
 
 };
+
 
 
 exports.validator = {
@@ -172,7 +173,7 @@ exports.validator = {
 	},
 
 
-	//
+	// fluent API //
 
 	create: function()
 	{
@@ -259,8 +260,9 @@ TypeValidator.prototype.fields = function(separator)
 	}
 	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, separator);
 };
-TypeValidator.prototype.val = function()
+TypeValidator.prototype.val = function(implicit)
 {
+	if(typeof this.value === 'undefined') return implicit;
 	return this.value;
 };
 
@@ -270,8 +272,9 @@ function IntValidator(validator, value, name, ignore)
 	BaseValidator.call(this, validator, value, name, ignore);
 }
 util.inherits(IntValidator, BaseValidator);
-IntValidator.prototype.val = function()
+IntValidator.prototype.val = function(implicit)
 {
+	if(typeof this.value === 'undefined') return implicit;
 	return exports.validator.toInt(this.value);
 };
 IntValidator.prototype.min = function(min)
@@ -326,8 +329,9 @@ function StringValidator(validator, value, name, ignore)
 	BaseValidator.call(this, validator, value, name, ignore);
 }
 util.inherits(StringValidator, BaseValidator);
-StringValidator.prototype.val = function()
+StringValidator.prototype.val = function(implicit)
 {
+	if(typeof this.value === 'undefined') return implicit;
 	return exports.validator.toString(this.value);
 };
 StringValidator.prototype.trim = function()
@@ -454,8 +458,9 @@ function FieldsValidator(validator, value, name, ignore, separator)
 	this.separator = separator || ',';
 }
 util.inherits(FieldsValidator, BaseValidator);
-FieldsValidator.prototype.val = function()
+FieldsValidator.prototype.val = function(implicit)
 {
+	if(typeof this.value === 'undefined') return implicit;
 	var val = exports.validator.toString(this.value).trim();
 	if(val.length === 0) return [];
 	return val.split(new RegExp('\\s*' + this.separator + '\\s*'));
@@ -481,4 +486,34 @@ FieldsValidator.prototype.values = function(ary)
 	}
 	return this;
 };
+
+
+
+exports.mapper = {
+	
+	create: function(fields)
+	{
+		return new FieldsMapper(fields, ':');
+	},
+	
+	
+};
+
+
+function FieldsMapper(fields, separator)
+{
+	// ary = ['<public[:private]>', ...]
+	this.separator = separator || ':';
+	this.public = new Array(fields.length);
+	this.private = new Array(fields.length);
+	fields.forEach((field, index) => {
+		var ary = field.trim().split(new RegExp('\\s*' + this.separator + '\\s*'));
+		this.public[index] = ary[0];
+		this.private[index] = ary.length > 1 ? ary[1] : ary[0];
+	});
+}
+FieldsMapper.prototype.public = null;
+FieldsMapper.prototype.private = null;
+
+
 

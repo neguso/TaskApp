@@ -11,27 +11,33 @@ exports.organizations = {
 
 	read: function(req, res, next)
 	{
-		var offset = req.query.offset,
-				limit = req.query.limit,
-				sort = req.query.sort,
-				order = req.query.order,
-				fields = util.validator.toString(req.query.fields).trim();
+		var map = util.mapper.create(['name', 'description']);
 
-		// check params
-		var ary = [];
-		if(util.validator.isString(offset) && !util.validator.isInt(offset, { min: 0 })) ary.push('offset');
-		if(util.validator.isString(limit) && !util.validator.isInt(limit, { min: 1, max: 100 })) ary.push('limit');
-		if(util.validator.isString(sort) && !util.validator.isvalidfield(sort, map)) ary.push('sort');
-		if(util.validator.isString(order) && ['asc', 'desc'].indexOf(order.toLowerCase()) === -1) ary.push('order');
-		if(fields.length > 0 && util.parameter.getinvalidfields(fields.split(','), map).length > 0) ary.push('fields');
-		if(ary.length > 0)
-			return next(new errors.InvalidArgument(ary.join(',')));
+		var validator = util.validator.create();
+		var offset = validator.optional(req.query.offset, 'offset').int().min(0).val(0);
+		var limit = validator.optional(req.query.limit, 'limit').int().min(1).val(20);
+		var sort = validator.optional(req.query.sort, 'sort').string().values(['name']).val('name');
+		var order = validator.optional(req.query.order, 'order').string().values(['asc', 'desc']).val('asc');
+		var fields = validator.optional(req.query.fields, 'fields').fields().values(map.public).val(['name', 'description']);
+		if(validator.errors().length > 0)
+			return next(new errors.InvalidArgument(validator.errors().join(',')));
 
-		var datafields = util.parameter.getvalidfields(fields.split(','), map);
-		if(datafields.length === 0)
-			datafields.push('email', 'firstname', 'lastname');
+		database.main.open().then((connection) => {
 
+			database.main.organizationuserlinks
+				.find({ user: req.user.id }, null, { skip: offset, limit: limit, lean: true })
+				.populate({ path: 'organization', select: map.private.join(' '), options: { lean: true } })
+				.exec((err, documents) => {
+				if(err) return next(err);
 
+				res.json(map.xxx(documents));
+				res.end();
+			});
+
+		}, (err) => {
+			// database error
+			next(err);
+		});
 	},
 
 	get: function(req, res, next)
