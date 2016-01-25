@@ -210,7 +210,7 @@ PresenceValidator.prototype.required = function(value, name) {
 PresenceValidator.prototype.errors = function()
 {
 	return this.validator.errors;
-}
+};
 
 function BaseValidator(validator, value, name, ignore)
 {
@@ -262,7 +262,7 @@ TypeValidator.prototype.fields = function(separator)
 };
 TypeValidator.prototype.val = function(implicit)
 {
-	if(typeof this.value === 'undefined') return implicit;
+	if(arguments.length === 1 && typeof this.value === 'undefined') return implicit;
 	return this.value;
 };
 
@@ -274,7 +274,7 @@ function IntValidator(validator, value, name, ignore)
 util.inherits(IntValidator, BaseValidator);
 IntValidator.prototype.val = function(implicit)
 {
-	if(typeof this.value === 'undefined') return implicit;
+	if(arguments.length === 1 && !exports.validator.isInt(this.value)) return implicit;
 	return exports.validator.toInt(this.value);
 };
 IntValidator.prototype.min = function(min)
@@ -331,7 +331,7 @@ function StringValidator(validator, value, name, ignore)
 util.inherits(StringValidator, BaseValidator);
 StringValidator.prototype.val = function(implicit)
 {
-	if(typeof this.value === 'undefined') return implicit;
+	if(arguments.length === 1 && !exports.validator.isString(this.value)) return implicit;
 	return exports.validator.toString(this.value);
 };
 StringValidator.prototype.trim = function()
@@ -460,7 +460,7 @@ function FieldsValidator(validator, value, name, ignore, separator)
 util.inherits(FieldsValidator, BaseValidator);
 FieldsValidator.prototype.val = function(implicit)
 {
-	if(typeof this.value === 'undefined') return implicit;
+	if(arguments.length === 1 && !exports.validator.isString(this.value)) return implicit;
 	var val = exports.validator.toString(this.value).trim();
 	if(val.length === 0) return [];
 	return val.split(new RegExp('\\s*' + this.separator + '\\s*'));
@@ -481,7 +481,8 @@ FieldsValidator.prototype.values = function(ary)
 {
 	if(!this.ignore && this.valid)
 	{
-		if(this.val().findIndex((field) => { return ary.indexOf(field) === -1; }) !== -1)
+		var val = this.val(); 
+		if(val.length === 0 || val.findIndex((field) => { return ary.indexOf(field) === -1; }) !== -1)
 			this.invalid();
 	}
 	return this;
@@ -514,6 +515,19 @@ function FieldsMapper(fields, separator)
 }
 FieldsMapper.prototype.public = null;
 FieldsMapper.prototype.private = null;
+FieldsMapper.prototype.decode = function(collection, fields)
+{
+	// private -> public
+	return collection.map((item) => {
+		var o = {};
+		for(var i = 0; i < fields.length; i++)
+		{
+			var index = this.public.indexOf(fields[i]);
+			o[this.public[index]] = item[this.private[index]];
+		}
+		return o;
+	});
+};
 
 
 

@@ -15,7 +15,7 @@ app.use(require('../monitor.js').performance());
 app.use(require('../monitor.js').logging());
 
 // handle authentication
-app.all('/organizations/*', require('../authenticate.js'));
+app.all('/*', require('../authenticate.js'));
 
 // handle application logic
 app.use('/', require('./routes.js'));

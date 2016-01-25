@@ -7,10 +7,10 @@ var code = require('./organizations.js'),
 var router = express.Router();
 
 router.get('/organizations', code.organizations.read);
-router.get('/organizations/:id', code.organizations.get, code.organizations.get);
+router.get('/organizations/:id', authorize.organizations.get, code.organizations.get);
 router.post('/organizations', code.organizations.create);
-router.put('/organizations/:id', code.organizations.update, code.organizations.update);
-router.delete('/organizations/:id', code.organizations.delete, code.organizations.delete);
+router.put('/organizations/:id', authorize.organizations.update, code.organizations.update);
+router.delete('/organizations/:id', authorize.organizations.delete, code.organizations.delete);
 
 
 module.exports = router;
