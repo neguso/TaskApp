@@ -192,7 +192,7 @@ ParametersValidator.prototype.add = function(name)
 {
 	if(this.errors.indexOf(name) === -1)
 		this.errors.push(name);
-}
+};
 
 
 function PresenceValidator(validator)
@@ -200,24 +200,24 @@ function PresenceValidator(validator)
 	this.validator = validator;
 }
 PresenceValidator.prototype.optional = function(value, name) {
-	return new TypeValidator(this.validator, value, name, typeof value === 'undefined');
+	return new TypeValidator(this.validator, value, name, false);
 };
 PresenceValidator.prototype.required = function(value, name) {
 	if(typeof value === 'undefined')
 		this.validator.add(name);
-	return new TypeValidator(this.validator, value, name, false);
+	return new TypeValidator(this.validator, value, name, true);
 };
 PresenceValidator.prototype.errors = function()
 {
 	return this.validator.errors;
 };
 
-function BaseValidator(validator, value, name, ignore)
+function BaseValidator(validator, value, name, required)
 {
 	this.validator = validator;
 	this.value = value;
 	this.name = name;
-	this.ignore = ignore;
+	this.required = required;
 	this.valid = (validator.errors.length === 0);
 }
 BaseValidator.prototype.invalid = function()
@@ -228,58 +228,68 @@ BaseValidator.prototype.invalid = function()
 };
 
 
-function TypeValidator(validator, value, name, ignore)
+function TypeValidator(validator, value, name, required)
 {
-	BaseValidator.call(this, validator, value, name, ignore);
+	BaseValidator.call(this, validator, value, name, required);
 }
 util.inherits(TypeValidator, BaseValidator);
 TypeValidator.prototype.int = function()
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(!exports.validator.isInt(this.value))
 			this.invalid();
 	}
-	return new IntValidator(this.validator, this.value, this.name, this.ignore);
+	return new IntValidator(this.validator, this.value, this.name, this.required);
 };
 TypeValidator.prototype.string = function()
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(!exports.validator.isString(this.value))
 			this.invalid();
 	}
-	return new StringValidator(this.validator, this.value, this.name, this.ignore);
+	return new StringValidator(this.validator, this.value, this.name, this.required);
 };
 TypeValidator.prototype.fields = function(separator)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(!exports.validator.isString(this.value))
 			this.invalid();
 	}
-	return new FieldsValidator(this.validator, this.value, this.name, this.ignore, separator);
+	return new FieldsValidator(this.validator, this.value, this.name, this.required, separator);
 };
 TypeValidator.prototype.val = function(implicit)
 {
-	if(arguments.length === 1 && typeof this.value === 'undefined') return implicit;
+	if(typeof this.value === 'undefined')
+	{
+		if(arguments.length > 0)
+			return implicit;
+		return; // undefined
+	}
 	return this.value;
 };
 
 
-function IntValidator(validator, value, name, ignore)
+function IntValidator(validator, value, name, required)
 {
-	BaseValidator.call(this, validator, value, name, ignore);
+	BaseValidator.call(this, validator, value, name, required);
 }
 util.inherits(IntValidator, BaseValidator);
 IntValidator.prototype.val = function(implicit)
 {
-	if(arguments.length === 1 && !exports.validator.isInt(this.value)) return implicit;
+	if(typeof this.value === 'undefined')
+	{
+		if(arguments.length > 0)
+			return implicit;
+		return; // undefined
+	}
 	return exports.validator.toInt(this.value);
 };
 IntValidator.prototype.min = function(min)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isInt(this.value))
 		{
@@ -294,7 +304,7 @@ IntValidator.prototype.min = function(min)
 };
 IntValidator.prototype.max = function(max)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isInt(this.value))
 		{
@@ -309,7 +319,7 @@ IntValidator.prototype.max = function(max)
 };
 IntValidator.prototype.range = function(min, max)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isInt(this.value))
 		{
@@ -324,14 +334,19 @@ IntValidator.prototype.range = function(min, max)
 };
 
 
-function StringValidator(validator, value, name, ignore)
+function StringValidator(validator, value, name, required)
 {
-	BaseValidator.call(this, validator, value, name, ignore);
+	BaseValidator.call(this, validator, value, name, required);
 }
 util.inherits(StringValidator, BaseValidator);
 StringValidator.prototype.val = function(implicit)
 {
-	if(arguments.length === 1 && !exports.validator.isString(this.value)) return implicit;
+	if(typeof this.value === 'undefined')
+	{
+		if(arguments.length > 0)
+			return implicit;
+		return; // undefined
+	}
 	return exports.validator.toString(this.value);
 };
 StringValidator.prototype.trim = function()
@@ -354,7 +369,7 @@ StringValidator.prototype.toUpper = function()
 };
 StringValidator.prototype.minlength = function(min)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isString(this.value))
 		{
@@ -369,7 +384,7 @@ StringValidator.prototype.minlength = function(min)
 };
 StringValidator.prototype.maxlength = function(max)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isString(this.value))
 		{
@@ -384,7 +399,7 @@ StringValidator.prototype.maxlength = function(max)
 };
 StringValidator.prototype.length = function(min, max)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isString(this.value))
 		{
@@ -407,7 +422,7 @@ StringValidator.prototype.length = function(min, max)
 };
 StringValidator.prototype.match = function(regexp)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isString(this.value))
 		{
@@ -422,7 +437,7 @@ StringValidator.prototype.match = function(regexp)
 };
 StringValidator.prototype.values = function(ary)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isString(this.value))
 		{
@@ -437,7 +452,7 @@ StringValidator.prototype.values = function(ary)
 };
 StringValidator.prototype.isEmail = function(ary)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		if(exports.validator.isString(this.value))
 		{
@@ -452,15 +467,20 @@ StringValidator.prototype.isEmail = function(ary)
 };
 
 
-function FieldsValidator(validator, value, name, ignore, separator)
+function FieldsValidator(validator, value, name, required, separator)
 {
-	BaseValidator.call(this, validator, value, name, ignore);
+	BaseValidator.call(this, validator, value, name, required);
 	this.separator = separator || ',';
 }
 util.inherits(FieldsValidator, BaseValidator);
 FieldsValidator.prototype.val = function(implicit)
 {
-	if(arguments.length === 1 && !exports.validator.isString(this.value)) return implicit;
+	if(typeof this.value === 'undefined')
+	{
+		if(arguments.length > 0)
+			return implicit;
+		return; // undefined
+	}
 	var val = exports.validator.toString(this.value).trim();
 	if(val.length === 0) return [];
 	return val.split(new RegExp('\\s*' + this.separator + '\\s*'));
@@ -479,7 +499,7 @@ FieldsValidator.prototype.toUpper = function()
 };
 FieldsValidator.prototype.values = function(ary)
 {
-	if(!this.ignore && this.valid)
+	if(this.valid && typeof this.value !== 'undefined')
 	{
 		var val = this.val(); 
 		if(val.length === 0 || val.findIndex((field) => { return ary.indexOf(field) === -1; }) !== -1)

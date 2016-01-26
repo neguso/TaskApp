@@ -12,21 +12,21 @@ exports.organizations = {
 	read: function(req, res, next)
 	{
 		var validator = util.validator.create();
-		var offset = validator.optional(req.query.offset, 'offset').int().min(0).val(0);
-		var limit = validator.optional(req.query.limit, 'limit').int().min(1).val(20);
-		var sort = validator.optional(req.query.sort, 'sort').string().values(['name']).val('name');
-		var order = validator.optional(req.query.order, 'order').string().values(['asc', 'desc']).val('asc');
-		var fields = validator.optional(req.query.fields, 'fields').fields().values(map.public).val(['id', 'name']);
+		var poffset = validator.optional(req.query.offset, 'offset').int().min(0).val(0);
+		var plimit = validator.optional(req.query.limit, 'limit').int().min(1).val(20);
+		var psort = validator.optional(req.query.sort, 'sort').string().values(['name']).val('name');
+		var porder = validator.optional(req.query.order, 'order').string().values(['asc', 'desc']).val('asc');
+		var pfields = validator.optional(req.query.fields, 'fields').fields().values(map.public).val(['id', 'name']);
 		if(validator.errors().length > 0)
 			return next(new errors.InvalidArgument(validator.errors().join(',')));
 
 		database.main.open().then((connection) => {
 
 			var qsort = {};
-			qsort[sort] = (order === 'asc' ? 1 : -1);
+			qsort[psort] = (porder === 'asc' ? 1 : -1);
 			database.main.organizationuserlinks
-				.find({ user: req.user.id }, 'organization', { skip: offset, limit: limit, sort: qsort, lean: true })
-				.populate({ path: 'organization', select: fields.join(' '), options: { lean: true } })
+				.find({ user: req.user.id }, 'organization', { skip: poffset, limit: plimit, sort: qsort, lean: true })
+				.populate({ path: 'organization', select: pfields.join(' '), options: { lean: true } })
 				.exec((err, documents) => {
 				if(err) return next(err);
 
@@ -34,9 +34,9 @@ exports.organizations = {
 					if(err) return next(err);
 
 					res.json({
-						offset: offset,
+						offset: poffset,
 						total: count,
-						items: map.decode(documents.map((item) => { return item.organization; }), fields)
+						items: map.decode(documents.map((item) => { return item.organization; }), pfields)
 					});
 					res.end();
 				});
@@ -57,7 +57,7 @@ exports.organizations = {
 	{
 		var validator = util.validator.create();
 		var pname = validator.required(req.body.name, 'name').string().length(1, 64).val();
-		var pdescription = validator.optional(req.body.description, 'description').string().val();
+		var pdescription = validator.optional(req.body.description, 'description').string().maxlength(512).val();
 		if(validator.errors().length > 0)
 			return next(new errors.InvalidArgument(validator.errors().join(',')));
 
@@ -71,7 +71,7 @@ exports.organizations = {
 			database.main.organizations.create(organization, (err, newOrganization) => {
 				if(err) return next(err);
 
-				// asign user
+				// asign current user as owner
 				var link = {
 					role: 'owner',
 					organization: newOrganization.id,

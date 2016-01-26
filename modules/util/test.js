@@ -23,7 +23,7 @@ assert(typeof res === 'undefined');
 
 res = v.optional(p_undefined, 'p_undefined').string().val();
 assert(v.errors().length === 0);
-assert(typeof res === 'string');
+assert(typeof res === 'undefined');
 
 
 v = util.validator.create();
@@ -32,11 +32,13 @@ assert(v.errors().length === 1 && v.errors()[0] === 'p_undefined');
 
 v = util.validator.create();
 res = v.required(p_undefined, 'p_undefined').string().val();
-assert(res === '');
+assert(v.errors().length === 1);
+assert(typeof res === 'undefined');
 
 v = util.validator.create();
 res = v.required(p_undefined, 'p_undefined').string().trim().minlength().val();
-assert(res === '');
+assert(v.errors().length === 1);
+assert(typeof res === 'undefined');
 
 v = util.validator.create();
 res = v.required(p_text, 'p_text').string().minlength(3).maxlength(5).toLower().length(4, 4).val();
