@@ -50,7 +50,19 @@ exports.organizations = {
 
 	get: function(req, res, next)
 	{
-		next();
+		var validator = util.validator.create();
+		var pid = validator.required(req.params.id, 'id').string().length(24, 24).val();
+		if(validator.errors().length > 0)
+			return next(new errors.InvalidArgument(validator.errors().join(',')));
+
+		database.main.open().then((connection) => {
+
+
+
+		}, (err) => {
+			// database error
+			next(err);
+		});
 	},
 
 	create: function(req, res, next)
@@ -71,7 +83,7 @@ exports.organizations = {
 			database.main.organizations.create(organization, (err, newOrganization) => {
 				if(err) return next(err);
 
-				// asign current user as owner
+				// asign current user to organization as owner
 				var link = {
 					role: 'owner',
 					organization: newOrganization.id,
