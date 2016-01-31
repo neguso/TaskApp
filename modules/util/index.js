@@ -140,13 +140,17 @@ exports.validator = {
 		return typeof value === 'string' && /[a-zA-Z0-9]/.test(value);
 	},
 
-	isInt: function(value, options)
+	isInt: function(value)
 	{
-		options = options || {};
-		var n = Number.parseInt(value, 10);
-		return n.toString() == value
-			&& ((options.hasOwnProperty('min') && n >= options.min) || !options.hasOwnProperty('min'))
-			&& ((options.hasOwnProperty('max') && n <= options.max) || !options.hasOwnProperty('max')); 
+		if(typeof value === 'string')
+		{
+			return Number.parseInt(value, 10).toString(10) == value.trim();
+		}
+		else if(typeof value === 'number')
+		{
+			return Math.floor(value) === value;
+		}
+		return false; 
 	},
 
 
@@ -535,19 +539,86 @@ function FieldsMapper(fields, separator)
 }
 FieldsMapper.prototype.public = null;
 FieldsMapper.prototype.private = null;
-FieldsMapper.prototype.decode = function(collection, fields)
+FieldsMapper.prototype.decode = function(datasource, fields)
 {
-	// private -> public
-	return collection.map((item) => {
+	// private -> public //
+	if(Array.isArray(datasource))
+	{
+		return datasource.map((item) => {
+			var o = {};
+			for(var i = 0; i < fields.length; i++)
+			{
+				var index = this.public.indexOf(fields[i]);
+				o[this.public[index]] = getValue(item, this.private[index]);
+			}
+			return o;
+		});
+	}
+	else
+	{
 		var o = {};
 		for(var i = 0; i < fields.length; i++)
 		{
 			var index = this.public.indexOf(fields[i]);
-			o[this.public[index]] = item[this.private[index]];
+			o[this.public[index]] = getValue(datasource, this.private[index]);
 		}
 		return o;
-	});
+	}
+};
+FieldsMapper.prototype.encode = function(datamodel, fields)
+{
+	// public -> private //
+	if(Array.isArray(datamodel))
+	{
+		return datamodel.map((item) => {
+			var o = {};
+			for(var i = 0; i < fields.length; i++)
+			{
+				var index = this.private.indexOf(fields[i]);
+				setValue(o, this.private[index], item[this.public[index]]);
+			}
+			return o;
+		});
+	}
+	else
+	{
+		var o = {};
+		for(var i = 0; i < fields.length; i++)
+		{
+			var index = this.private.indexOf(fields[i]);
+			setValue(o, this.private[index], datamodel[this.public[index]]);
+		}
+		return o;
+	}
 };
 
 
+function getValue(obj, path)
+{
+  var paths = path.split('.'), current = obj;
+  for(var i = 0; i < paths.length; i++)
+	{
+		if(typeof current[paths[i]] === 'undefined')
+			return undefined;
+		else
+			current = current[paths[i]];
+  }
+  return current;
+}
 
+function setValue(obj, path, value)
+{
+  var paths = path.split('.'), current = obj;
+  for(var i = 0; i < paths.length; i++)
+	{
+		if(i === paths.length - 1)
+			current[paths[i]] = value;
+		else
+		{
+			if(typeof current[paths[i]] === 'undefined')
+				current = current[paths[i]] = {};
+			else
+				current = current[paths[i]];
+		}
+  }
+}

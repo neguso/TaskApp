@@ -14,7 +14,7 @@ module.exports = function(connection)
 		description: { type: Schema.Types.String, maxlength: 512 }
 	}, { timestamps: { createdAt: 'createdon', updatedAt: 'updatedon' } });
 
-	//organizationSchema.index({ name: 1 }, { name: 'ix_name' });
+	organizationSchema.index({ name: 1 }, { name: 'ix_name' });
 
 	organizationSchema.pre('remove', true, function(next, done) {
 		beforeremove(connection, [this.id], (err, counts) => {

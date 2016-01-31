@@ -5,12 +5,12 @@ var database = require('../../modules/database'),
 		util = require('../../modules/util'),
 		errors = require('../errors.js');
 
-var map = util.mapper.create(['id:_id', 'name', 'description']);
 
 exports.organizations = {
 
 	read: function(req, res, next)
 	{
+		var map = util.mapper.create(['id:organization._id', 'name:organization.name', 'description:organization.description', 'role']);
 		var validator = util.validator.create();
 		var poffset = validator.optional(req.query.offset, 'offset').int().min(0).val(0);
 		var plimit = validator.optional(req.query.limit, 'limit').int().min(1).val(20);
@@ -25,7 +25,7 @@ exports.organizations = {
 			var qsort = {};
 			qsort[psort] = (porder === 'asc' ? 1 : -1);
 			database.main.organizationuserlinks
-				.find({ user: req.user.id }, 'organization', { skip: poffset, limit: plimit, sort: qsort, lean: true })
+				.find({ user: req.user.id }, 'organization role', { skip: poffset, limit: plimit, sort: qsort, lean: true })
 				.populate({ path: 'organization', select: pfields.join(' '), options: { lean: true } })
 				.exec((err, documents) => {
 				if(err) return next(err);
@@ -36,9 +36,10 @@ exports.organizations = {
 					res.json({
 						offset: poffset,
 						total: count,
-						items: map.decode(documents.map((item) => { return item.organization; }), pfields)
+						items: map.decode(documents.map((item) => { return item; }), pfields)
 					});
 					res.end();
+					next();
 				});
 			});
 
@@ -50,14 +51,30 @@ exports.organizations = {
 
 	get: function(req, res, next)
 	{
+		var map = util.mapper.create(['id:organization._id', 'name:organization.name', 'description:organization.description', 'role']);
 		var validator = util.validator.create();
-		var pid = validator.required(req.params.id, 'id').string().length(24, 24).val();
+		var pid = validator.required(req.params.id, 'id').string().length(24).val();
+		var pfields = validator.optional(req.query.fields, 'fields').fields().values(map.public).val(['id', 'name']);
 		if(validator.errors().length > 0)
 			return next(new errors.InvalidArgument(validator.errors().join(',')));
 
 		database.main.open().then((connection) => {
 
+			database.main.organizationuserlinks
+				.findOne({ user: req.user.id, organization: pid }, 'organization role', { lean: true })
+				.populate({ path: 'organization', select: pfields.join(' '), options: { lean: true } })
+				.exec((err, document) => {
+				if(err) return next(err);
 
+				if(document === null)
+					next(new errors.NotFound());
+				else
+				{
+					res.json(map.decode(document, pfields));
+					res.end();
+					next();
+				}
+			});
 
 		}, (err) => {
 			// database error
@@ -94,6 +111,7 @@ exports.organizations = {
 
 					res.json({ id: newOrganization.id });
 					res.end();
+					next();
 				});
 			});
 
@@ -105,12 +123,140 @@ exports.organizations = {
 
 	update: function(req, res, next)
 	{
-		next();
+		var map = util.mapper.create(['name', 'description']);
+		var validator = util.validator.create();
+		var pid = validator.required(req.params.id, 'id').string().length(24).val();
+		var pname = validator.optional(req.body.name, 'name').string().length(1, 64).val();
+		var pdescription = validator.optional(req.body.description, 'description').string().maxlength(512).val();
+		var pfields = validator.optional(req.query.fields, 'fields').fields().values(map.public).val(['id', 'name']);
+		if(validator.errors().length > 0)
+			return next(new errors.InvalidArgument(validator.errors().join(',')));
+
+		database.main.open().then((connection) => {
+
+			var update = map.encode({ name: pname, description: pdescription }, map.public);
+			database.main.organizations.findOneAndUpdate({ _id: pid }, update, { new: true }, (err, updatedOrganization) => {
+				if(err) return next(err);
+
+				if(updatedOrganization === null)
+					next(new errors.NotFound());
+				else
+				{
+					res.json(map.decode(updatedOrganization, pfields));
+					res.end();
+					next();
+				}
+			});
+
+		}, (err) => {
+			// database error
+			next(err);
+		});
 	},
 
 	delete: function(req, res, next)
 	{
+		var validator = util.validator.create();
+		var pid = validator.required(req.params.id, 'id').string().length(24).val();
+		if(validator.errors().length > 0)
+			return next(new errors.InvalidArgument(validator.errors().join(',')));
+
+		database.main.open().then((connection) => {
+
+			database.main.organizations.deleteById(pid, (err, numAffected) => {
+
+				if(numAffected > 0)
+				{
+					res.json({ deleted: numAffected });
+					res.end();
+					next();
+				}
+				else
+					next(new errors.NotFound());
+			});
+
+		}, (err) => {
+			// database error
+			next(err);
+		});
+	},
+
+
+	readusers: function(req, res, next)
+	{
+		var map = util.mapper.create(['id:user._id', 'email:user.email', 'firstname:user.firstname', 'lastname:user.lastname']);
+		var validator = util.validator.create();
+		var pid = validator.required(req.params.id, 'id').string().length(24).val();
+		var poffset = validator.optional(req.query.offset, 'offset').int().min(0).val(0);
+		var plimit = validator.optional(req.query.limit, 'limit').int().min(1).val(20);
+		var psort = validator.optional(req.query.sort, 'sort').string().values(['email', 'firstname', 'lastname']).val('email');
+		var porder = validator.optional(req.query.order, 'order').string().values(['asc', 'desc']).val('asc');
+		var pfields = validator.optional(req.query.fields, 'fields').fields().values(map.public).val(['id', 'email', 'firstname', 'lastname']);
+		if(validator.errors().length > 0)
+			return next(new errors.InvalidArgument(validator.errors().join(',')));
+
+		database.main.open().then((connection) => {
+
+			var qsort = {};
+			qsort[psort] = (porder === 'asc' ? 1 : -1);
+			database.main.organizationuserlinks
+				.find({ organization: pid, user: req.user.id }, 'user', { skip: poffset, limit: plimit, sort: qsort, lean: true })
+				.populate({ path: 'user', select: pfields.join(' '), options: { lean: true } })
+				.exec((err, documents) => {
+				if(err) return next(err);
+
+				database.main.organizationuserlinks.count({ organization: pid, user: req.user.id }, (err, count) => {
+					if(err) return next(err);
+
+					res.json({
+						offset: poffset,
+						total: count,
+						items: map.decode(documents.map((item) => { return item; }), pfields)
+					});
+					res.end();
+					next();
+				});
+			});
+
+		}, (err) => {
+			// database error
+			next(err);
+		});
+	},
+
+	updateuser: function(req, res, next)
+	{
+		var validator = util.validator.create();
+		var pid = validator.required(req.params.id, 'id').string().length(24).val();
+		var puser = validator.required(req.params.user, 'user').string().length(24).val();
+		var prole = validator.required(req.body.role, 'role').string().values(['owner', 'admin', 'member', 'guest']).val();
+		if(validator.errors().length > 0)
+			return next(new errors.InvalidArgument(validator.errors().join(',')));
+
+		database.main.open().then((connection) => {
+
+			var update = { role: prole, organization: pid, user: puser };
+			database.main.organizations.findOneAndUpdate({ _id: pid }, update, { upsert: true, new: true }, (err, updatedOrganization) => {
+				if(err) return next(err);
+
+				if(updatedOrganization === null)
+					next(new errors.NotFound());
+				else
+				{
+					res.json(map.decode(updatedOrganization, pfields));
+					res.end();
+					next();
+				}
+			});
+
+		}, (err) => {
+			// database error
+			next(err);
+		});
+	},
+
+	deleteuser: function(req, res, next)
+	{
 		next();
 	}
-
 };

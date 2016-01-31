@@ -176,16 +176,10 @@ res = v.required(p_fields, 'p_fields').fields().toLower().values(['a', 'b', 'x',
 assert(v.errors().length === 1);
 
 
-var end = 1;
 
 
+var map = util.mapper.create(['id:_id', 'name', 'role:user.role']);
+var d1 = map.decode({ _id: 123, name: 'dorel', user: { role: 'admin' } }, map.public);
+var e1 = map.encode({ id: 123, name: 'dorel', role: 'admin' }, map.private);
 
-
-
-
-//validator.required(req.query.offset).val();
-
-//int().range(0, 100).min(0).max(100).val()
-//string().trim().toLowerCase().toUpperCase().length(0, 100).values([]).match(regexp).isEmail().val()
-//fields().toLower().toUpper().values([]).val()
-
+var end;
