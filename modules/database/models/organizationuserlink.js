@@ -15,6 +15,32 @@ module.exports = function(connection)
 
 	organizationuserlinkSchema.index({ organization: 1, user: 1 }, { name: 'ix_organization_user', unique: true });
 
+	organizationuserlinkSchema.pre('save', function(next) {
+		// check organization, user references
+		Promise.all([
+			new Promise((resolve, reject) => {
+				connection.model('Organization').count({ _id: this.organization }, (err, count) => {
+					if(err) return reject(err);
+					if(count === 0)
+						return reject(new Error('Invalid reference: Organization'));
+					resolve();
+				});
+			}),
+			new Promise((resolve, reject) => {
+				connection.model('User').count({ _id: this.user }, (err, count) => {
+					if(err) return reject(err);
+					if(count === 0)
+						return reject(new Error('Invalid reference: User'));
+					resolve();
+				});
+			})
+		]).then(() => {
+			next();
+		}, (err) => {
+			next(err);
+		});
+	});
+
 
 	return connection.model('OrganizationUserLink', organizationuserlinkSchema);
 };

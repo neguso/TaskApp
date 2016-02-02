@@ -28,16 +28,6 @@ module.exports = function(connection)
 		afterremove(connection, [this.id], (err, result) => { /* nothing here, errors are logged */ });
 	});
 
-	// assign user to organization
-	organizationSchema.methods.assign = function(user, role, callback)
-	{
-		connection.models('OrganizationUserLink').create({
-			role: role,
-			ogranization: this.id,
-			user: user
-		}, callback);
-	};
-
 	organizationSchema.methods.delete = function()
 	{
 		this.remove.apply(this, arguments);
