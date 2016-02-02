@@ -2,7 +2,26 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Launch",
+			"name": "Accounts",
+			"type": "node",
+			"request": "launch",
+			"program": "services/accounts/app.js",
+			"stopOnEntry": false,
+			"args": [],
+			"cwd": ".",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
+			"name": "Organizations",
 			"type": "node",
 			"request": "launch",
 			"program": "services/organizations/app.js",

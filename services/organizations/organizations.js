@@ -134,7 +134,7 @@ exports.organizations = {
 
 		database.main.open().then((connection) => {
 
-			var update = map.encode({ name: pname, description: pdescription }, map.public);
+			var update = map.encode({ name: pname, description: pdescription }, map.private);
 			database.main.organizations.findOneAndUpdate({ _id: pid }, update, { new: true }, (err, updatedOrganization) => {
 				if(err) return next(err);
 
@@ -184,7 +184,7 @@ exports.organizations = {
 
 	readusers: function(req, res, next)
 	{
-		var map = util.mapper.create(['id:user._id', 'email:user.email', 'firstname:user.firstname', 'lastname:user.lastname']);
+		var map = util.mapper.create(['id:user._id', 'role', 'email:user.email', 'firstname:user.firstname', 'lastname:user.lastname']);
 		var validator = util.validator.create();
 		var pid = validator.required(req.params.id, 'id').string().length(24).val();
 		var poffset = validator.optional(req.query.offset, 'offset').int().min(0).val(0);
@@ -197,21 +197,23 @@ exports.organizations = {
 
 		database.main.open().then((connection) => {
 
+			var qfilter = { organization: pid };
 			var qsort = {};
 			qsort[psort] = (porder === 'asc' ? 1 : -1);
+			var userfields = map.private.filter((item, index) => { return pfields.indexOf(map.public[index]) !== -1 && item.startsWith('user.'); }).map((item) => { return item.substring(5); });
 			database.main.organizationuserlinks
-				.find({ organization: pid, user: req.user.id }, 'user', { skip: poffset, limit: plimit, sort: qsort, lean: true })
-				.populate({ path: 'user', select: pfields.join(' '), options: { lean: true } })
+				.find(qfilter, 'role user', { skip: poffset, limit: plimit, sort: qsort, lean: true })
+				.populate({ path: 'user', select: userfields.join(' '), options: { lean: true } })
 				.exec((err, documents) => {
 				if(err) return next(err);
 
-				database.main.organizationuserlinks.count({ organization: pid, user: req.user.id }, (err, count) => {
+				database.main.organizationuserlinks.count(qfilter, (err, count) => {
 					if(err) return next(err);
 
 					res.json({
 						offset: poffset,
 						total: count,
-						items: map.decode(documents.map((item) => { return item; }), pfields)
+						items: map.decode(documents, pfields)
 					});
 					res.end();
 					next();
@@ -226,6 +228,7 @@ exports.organizations = {
 
 	updateuser: function(req, res, next)
 	{
+		var map = util.mapper.create(['role', 'organization', 'user']);
 		var validator = util.validator.create();
 		var pid = validator.required(req.params.id, 'id').string().length(24).val();
 		var puser = validator.required(req.params.user, 'user').string().length(24).val();
@@ -235,18 +238,13 @@ exports.organizations = {
 
 		database.main.open().then((connection) => {
 
-			var update = { role: prole, organization: pid, user: puser };
-			database.main.organizations.findOneAndUpdate({ _id: pid }, update, { upsert: true, new: true }, (err, updatedOrganization) => {
+			var upsert = map.encode({ role: prole, organization: pid, user: puser }, map.private);
+			database.main.organizationuserlinks.findOneAndUpdate({ organization: pid, user: puser }, upsert, { upsert: true, new: true }, (err, upsertOrganization) => {
 				if(err) return next(err);
 
-				if(updatedOrganization === null)
-					next(new errors.NotFound());
-				else
-				{
-					res.json(map.decode(updatedOrganization, pfields));
-					res.end();
-					next();
-				}
+				res.json({ result: 'ok' });
+				res.end();
+				next();
 			});
 
 		}, (err) => {

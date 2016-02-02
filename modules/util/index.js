@@ -528,6 +528,8 @@ exports.mapper = {
 function FieldsMapper(fields, separator)
 {
 	// ary = ['<public[:private]>', ...]
+	// public = property name
+	// private = property name or path
 	this.separator = separator || ':';
 	this.public = new Array(fields.length);
 	this.private = new Array(fields.length);
@@ -542,6 +544,9 @@ FieldsMapper.prototype.private = null;
 FieldsMapper.prototype.decode = function(datasource, fields)
 {
 	// private -> public //
+	// create a datamodel object by copying specified fields from datasource, skips undefined properties in datasource
+	// datasource = private datasource object
+	// fields = a list of public property names required on the datamodel
 	if(Array.isArray(datasource))
 	{
 		return datasource.map((item) => {
@@ -549,7 +554,9 @@ FieldsMapper.prototype.decode = function(datasource, fields)
 			for(var i = 0; i < fields.length; i++)
 			{
 				var index = this.public.indexOf(fields[i]);
-				o[this.public[index]] = getValue(item, this.private[index]);
+				var value = getValue(item, this.private[index]);
+				if(typeof value !== 'undefined')
+					o[this.public[index]] = value;
 			}
 			return o;
 		});
@@ -560,7 +567,9 @@ FieldsMapper.prototype.decode = function(datasource, fields)
 		for(var i = 0; i < fields.length; i++)
 		{
 			var index = this.public.indexOf(fields[i]);
-			o[this.public[index]] = getValue(datasource, this.private[index]);
+			var value = getValue(datasource, this.private[index]);
+			if(typeof value !== 'undefined')
+				o[this.public[index]] = value;
 		}
 		return o;
 	}
@@ -568,6 +577,9 @@ FieldsMapper.prototype.decode = function(datasource, fields)
 FieldsMapper.prototype.encode = function(datamodel, fields)
 {
 	// public -> private //
+	// create a datasource object by copying specified fields from datamodel, skips undefined properties in datamodel
+	// datamodel = public datamodel object
+	// fields = a list of private property names required on the datasource
 	if(Array.isArray(datamodel))
 	{
 		return datamodel.map((item) => {
@@ -575,7 +587,9 @@ FieldsMapper.prototype.encode = function(datamodel, fields)
 			for(var i = 0; i < fields.length; i++)
 			{
 				var index = this.private.indexOf(fields[i]);
-				setValue(o, this.private[index], item[this.public[index]]);
+				var value = item[this.public[index]];
+				if(typeof value !== 'undefined')
+					setValue(o, this.private[index], value);
 			}
 			return o;
 		});
@@ -586,7 +600,9 @@ FieldsMapper.prototype.encode = function(datamodel, fields)
 		for(var i = 0; i < fields.length; i++)
 		{
 			var index = this.private.indexOf(fields[i]);
-			setValue(o, this.private[index], datamodel[this.public[index]]);
+			var value = datamodel[this.public[index]];
+			if(typeof value !== 'undefined')
+				setValue(o, this.private[index], value);
 		}
 		return o;
 	}

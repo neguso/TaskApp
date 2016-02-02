@@ -19,7 +19,7 @@ exports.organizations = {
 			database.main.organizationuserlinks.findOne({ user: req.user.id, organization: pid }, 'role', { lean: true }, (err, document) => {
 				if(err) return next(err);
 
-				if(document.role != 'owner' && document.role != 'admin')
+				if(document === null || (document.role != 'owner' && document.role != 'admin'))
 					next(new errors.Forbidden());
 				else
 					next();
@@ -43,7 +43,7 @@ exports.organizations = {
 			database.main.organizationuserlinks.findOne({ user: req.user.id, organization: pid }, 'role', { lean: true }, (err, document) => {
 				if(err) return next(err);
 
-				if(document.role != 'owner')
+				if(document === null || document.role != 'owner')
 					next(new errors.Forbidden());
 				else
 					next();
