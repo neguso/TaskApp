@@ -72,7 +72,10 @@ database.main.open().then((connection) => {
 				});
 
 				// find & populate
-				database.main.teams.findOne({ _id: newTeam.id }, null, { lean: true }).populate({ path: 'organization', select: 'name', options: { lean: true } }).exec((err, populatedTeam) => {
+				database.main.teams
+					.findOne({ _id: newTeam.id }, null, { lean: true })
+					.populate({ path: 'organization', select: 'name', options: { lean: true } })
+					.exec((err, populatedTeam) => {
 					if(err) return console.log('error populating team');
 					assert(populatedTeam.organization !== null && populatedTeam.organization.name === 'my organization');
 				});
@@ -93,24 +96,27 @@ database.main.open().then((connection) => {
 		});
 
 
-		/// find & update
+		/// find one & update
 		database.main.organizations.create({ name: 'Umbrella' }, (err, newOrganization) => {
 			if(err) return console.log('error creating organization');
 
-			database.main.organizations.findOneAndUpdate({ name: 'xxxUmbrella' }, { description: 'updated' }, { new: true, runValidators: true }, (err, document) => {
-				if(err) return console.log('error findone & update organization: update');
+			database.main.organizations.updateOne({ name: 'Umbrella' }, { description: 'updated' }, { new: true }, (err, document) => {
+				if(err) return console.log('error updateone organization: update');
+				assert(document.name === 'Umbrella', 'organization name should be the same');
+				assert(document.description === 'updated', 'organization description should be updated');
 			});
 
-			database.main.organizations.findOneAndUpdate({ description: 'nonexiting' }, { description: 'descr' }, { upsert: true, new: true, runValidators: true }, (err, document) => {
+			database.main.organizations.updateOne({ name: 'nonexiting' }, { name: 'inserted' }, { upsert: true, new: true }, (err, document) => {
 				if(err) return console.log('error findone & update organization: insert');
+				assert(document.name === 'inserted', 'organization name is incorect');
+			});
+
+			database.main.organizations.updateOne({ name: 'nonexiting' }, { description: 'inserted' }, { upsert: true, new: true }, (err, document) => {
+				assert(err !== null, 'should fail because name is required');
 			});
 
 
 		});
-
-
-		/// find & delete
-
 
 	});
 
@@ -123,7 +129,7 @@ database.main.open().then((connection) => {
 		});
 	});
 
-	/// remove document by id using model.delete()
+	/// remove document by id using model.deleteById()
 	database.main.users.create({ email: 'deletebyid@example.com', firstname: 'Joe', password: 'secret' }, (err, newUser) => {
 		if(err) return console.log('error creating user');
 		database.main.users.deleteById(newUser.id, (err, numAffected) => {
@@ -147,24 +153,24 @@ database.main.open().then((connection) => {
 		// using document.delete()
 		database.main.users.create([{ email: 'deletedocument1@example.com', firstname: 'b', password: 'secret' }, { email: 'deletedocument2@example.com', firstname: 'b', password: 'secret' }], (err, newUsers) => {
 			if(err) return console.log('error creating users');
-			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id }, { organization: newOrganization.id, user: newUsers[1].id }], (err, newLinks) => {
+			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id, role: 'owner' }, { organization: newOrganization.id, user: newUsers[1].id, role: 'admin' }], (err, newLinks) => {
 				if(err) return console.log('error creating organization-user links');
 				database.main.journal.create([{ content: 'journal entry b', entity: newUsers[0].id }, { content: 'journal entry b', entity: newUsers[1].id }], () => {
 					if(err) return console.log('error creating journal');
 					newUsers[0].delete((err, deletedUser) => {
-						if(err) return console.log('error deleting organization-user links');
+						if(err) return console.log('error deleting user 1');
 					});
 					newUsers[1].delete((err, deletedUser) => {
-						if(err) return console.log('error deleting organization-user links');
+						if(err) return console.log('error deleting user 2');
 					});				
 				});
 			});
 		});
 
-		// using model.delete
+		// using model.delete()
 		database.main.users.create([{ email: 'deletemodel1@example.com', firstname: 'c', password: 'secret' }, { email: 'deletemodel2@example.com', firstname: 'c', password: 'secret' }], (err, newUsers) => {
 			if(err) return console.log('error creating users');
-			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id }, { organization: newOrganization.id, user: newUsers[1].id }], (err, newLinks) => {
+			database.main.organizationuserlinks.create([{ organization: newOrganization.id, user: newUsers[0].id, role: 'owner' }, { organization: newOrganization.id, user: newUsers[1].id, role: 'admin' }], (err, newLinks) => {
 				if(err) return console.log('error creating organization-user links');
 				database.main.journal.create([{ content: 'journal entry c', entity: newUsers[0].id }, { content: 'journal entry c', entity: newUsers[1].id }], () => {
 					if(err) return console.log('error creating journal');

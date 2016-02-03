@@ -16,14 +16,7 @@ module.exports = function(connection)
 
 	organizationSchema.index({ name: 1 }, { name: 'ix_name' });
 
-	organizationSchema.pre('findOneAndUpdate', function(next) {
-		
-		this.count({}, (err, count) => {
-			var a = 1;
-		})
-		
-		next();
-	});
+	organizationSchema.plugin(plugins.api, { connection: connection, model: 'Organization' });
 
 	organizationSchema.pre('remove', true, function(next, done) {
 		beforeremove(connection, [this.id], (err, counts) => {
