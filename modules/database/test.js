@@ -94,6 +94,19 @@ database.main.open().then((connection) => {
 
 
 		/// find & update
+		database.main.organizations.create({ name: 'Umbrella' }, (err, newOrganization) => {
+			if(err) return console.log('error creating organization');
+
+			database.main.organizations.findOneAndUpdate({ name: 'xxxUmbrella' }, { description: 'updated' }, { new: true, runValidators: true }, (err, document) => {
+				if(err) return console.log('error findone & update organization: update');
+			});
+
+			database.main.organizations.findOneAndUpdate({ description: 'nonexiting' }, { description: 'descr' }, { upsert: true, new: true, runValidators: true }, (err, document) => {
+				if(err) return console.log('error findone & update organization: insert');
+			});
+
+
+		});
 
 
 		/// find & delete
