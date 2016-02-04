@@ -239,7 +239,7 @@ exports.organizations = {
 		database.main.open().then((connection) => {
 
 			var upsert = map.encode({ role: prole, organization: pid, user: puser }, map.private);
-			database.main.organizationuserlinks.findOneAndUpdate({ organization: pid, user: puser }, upsert, { upsert: true, new: true }, (err, upsertOrganization) => {
+			database.main.organizationuserlinks.updateOne({ organization: pid, user: puser }, upsert, { upsert: true, new: true }, (err, upsertOrganization) => {
 				if(err) return next(err);
 
 				res.json({ result: 'ok' });

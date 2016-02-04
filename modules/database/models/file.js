@@ -15,6 +15,6 @@ module.exports = function(connection)
 
 	fileSchema.index({ entity: 1 }, { name: 'ix_entity' });
 
-	
+
 	return connection.model('File', fileSchema);
 };

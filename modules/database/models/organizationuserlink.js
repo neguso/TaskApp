@@ -3,6 +3,9 @@
 var mongoose = require('mongoose'),
 		Schema = mongoose.Schema;
 
+var logger = require('../../logger'),
+		plugins = require('./plugins.js');
+
 
 module.exports = function(connection)
 {
@@ -15,8 +18,10 @@ module.exports = function(connection)
 
 	organizationuserlinkSchema.index({ organization: 1, user: 1 }, { name: 'ix_organization_user', unique: true });
 
+	organizationuserlinkSchema.plugin(plugins.api, { connection: connection, model: 'OrganizationUserLink' });
+
 	organizationuserlinkSchema.pre('save', function(next) {
-		// check organization, user references
+		// check [organization, user] references
 		Promise.all([
 			new Promise((resolve, reject) => {
 				connection.model('Organization').count({ _id: this.organization }, (err, count) => {
