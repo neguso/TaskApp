@@ -188,3 +188,90 @@ database.main.open().then((connection) => {
 }, (err) => {
 	console.log('error connecting to MongoDB');
 });
+
+
+
+
+function ModelsRepository(model)
+{
+	this.model = model;
+}
+
+ModelsRepository.prototype.model = null;
+
+/// Get one document by id.
+///   options  := { fields: 'f1 f2 ...', sort: <sort>, lean: <bool>, populate: <populate> }
+///   sort     := { f1: 1|-1, f2: 1|-1, ... }
+///   populate := { path: <path>, model: <string>, select: 'f1 f2 ...', lean: <bool> }
+///   callback := (err, document) => {}
+ModelsRepository.prototype.get = function(id, options, callback)
+{
+	// model.findById(...)[.populate(...)]
+}
+
+/// Get documents by condition.
+///   options  := { fields: 'f1 f2 ...', sort: <sort>, skip: <number>, limit: <number>, lean: <bool>, populate: <populate> }
+///   populate := { path: <path>, model: <string>, select: 'f1 f2 ...', lean: <bool> }
+///   callback := (err, documents) => {}
+ModelsRepository.prototype.read = function(condition, options, callback)
+{
+	// model.findOne(...)[.populate(...)] if take == 1
+	// model.find(...)[.populate(...)] if take > 1
+}
+
+/// Populate one or more documents.
+///   documents := document|array
+///   options   := { path: <path>, model: <string>, select: 'f1 f2 ...', lean: <bool> }
+///   callback  := (err, documents) => {}
+ModelsRepository.prototype.populate = function(documents, options, callback)
+{
+	// model.populate(...)
+}
+
+/// Create a new document.
+///   object   := { f1: <any>, f2: <any>, ... }
+///   callback := (err, document) => {}
+ModelsRepository.prototype.create = function(object, callback)
+{
+	// preupdate
+	// model.create(...)
+	// postupdate
+}
+
+/// Update documents that match condition.
+///   object   := { f1: <any>, f2: <any>, ... }
+///   options  := { upsert: <bool>, sort: <sort>, limit: <number> }
+///   callback := (err, document) => {}
+ModelsRepository.prototype.update = function(condition, object, options, callback)
+{
+	// model.findOne(...) if take == 1
+	// model.find(...) if take > 1
+	// +
+	// preupdate
+	// document.save()
+	// postupdate
+}
+
+/// Save one or more documents.
+///   documents := document|array
+///   callback := (err, documents) => {}
+ModelsRepository.prototype.save = function(documents, callback)
+{
+	// preupdate
+	// document.save()
+	// postupdate
+}
+
+/// Delete one or more documents.
+///   condition := condition
+///   callback := (err, documents) => {}
+ModelsRepository.prototype.delete = function(condition, callback)
+{
+	// model.find(...)
+	// +
+	// pre remove
+	// model.remove(...)
+	// post remove
+}
+
+ModelsRepository.prototype.onbeforeremove

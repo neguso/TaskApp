@@ -255,6 +255,25 @@ exports.organizations = {
 
 	deleteuser: function(req, res, next)
 	{
-		next();
+		var validator = util.validator.create();
+		var pid = validator.required(req.params.id, 'id').string().length(24).val();
+		var puser = validator.required(req.params.user, 'user').string().length(24).val();
+		if(validator.errors().length > 0)
+			return next(new errors.InvalidArgument(validator.errors().join(',')));
+
+		database.main.open().then((connection) => {
+
+			database.main.organizationuserlinks.delete({ organization: pid, user: puser }, (err, numAffected) => {
+				if(err) return next(err);
+
+				res.json({ deleted: numAffected });
+				res.end();
+				next();
+			});
+
+		}, (err) => {
+			// database error
+			next(err);
+		});
 	}
 };

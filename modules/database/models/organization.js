@@ -16,7 +16,12 @@ module.exports = function(connection)
 
 	organizationSchema.index({ name: 1 }, { name: 'ix_name' });
 
-	organizationSchema.plugin(plugins.api, { connection: connection, model: 'Organization' });
+	organizationSchema.plugin(plugins.api, {
+		connection: connection,
+		model: 'Organization',
+		beforeremove: beforeremove,
+		afterremove: afterremove
+	});
 
 	organizationSchema.pre('remove', true, function(next, done) {
 		beforeremove(connection, [this.id], (err, counts) => {
@@ -29,45 +34,6 @@ module.exports = function(connection)
 	organizationSchema.post('remove', function(document) {
 		afterremove(connection, [this.id], (err, result) => { /* nothing here, errors are logged */ });
 	});
-
-	organizationSchema.methods.delete = function()
-	{
-		this.remove.apply(this, arguments);
-	};
-
-	organizationSchema.statics.deleteById = function(id, callback)
-	{
-		beforeremove(connection, [id], (err, result) => {
-			if(err) return callback(err);
-
-			connection.model('Organization').remove({ _id: id }, (err, info) => {
-				if(err) return callback(err);
-
-				callback(null, info.result.n);
-
-				afterremove(connection, [id], (err, result) => { /* nothing here, errors are logged */ });
-			});
-		});
-	};
-	
-	organizationSchema.statics.delete = function(criteria, callback)
-	{
-		connection.model('Organization').find(criteria, '_id', { lean: true }, (err, ids) => {
-			if(err) return callback(err);
-
-			beforeremove(connection, ids, (err, result) => {
-				if(err) return callback(err);
-
-				connection.model('Organization').remove(criteria, (err, info) => {
-					if(err) return callback(err);
-						
-					callback(null, info.result.n);
-
-					afterremove(connection, ids, (err, result) => { /* nothing here, errors are logged */ });
-				});
-			});
-		});
-	};
 
 
 	return connection.model('Organization', organizationSchema);
@@ -107,15 +73,6 @@ function beforeremove(connection, ids, callback)
 								resolve(info.result.n);
 							});
 						
-						}),
-						new Promise((resolve, reject) => {
-							
-							connection.model('Journal').remove({ entity: id }, (err, info) => {
-								if(err) return reject(err);
-								
-								resolve(info.result.n);
-							});
-							
 						})
 					]).then(() => { resolve(); }, (err) => { reject(err); });
 					
