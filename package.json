@@ -20,6 +20,7 @@
     "socket.io": "latest"
   },
   "devDependencies": {
-    "frisby": "latest"
+    "frisby": "latest",
+    "typescript": "^1.9.0-dev.20160212"
   }
 }

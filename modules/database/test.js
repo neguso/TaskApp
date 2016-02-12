@@ -274,4 +274,7 @@ ModelsRepository.prototype.delete = function(condition, callback)
 	// post remove
 }
 
-ModelsRepository.prototype.onbeforeremove
+ModelsRepository.prototype.preupdate = null;
+ModelsRepository.prototype.postupdate = null;
+ModelsRepository.prototype.predelete = null;
+ModelsRepository.prototype.postdelete = null;
