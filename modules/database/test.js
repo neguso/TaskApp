@@ -207,7 +207,7 @@ ModelsRepository.prototype.model = null;
 ModelsRepository.prototype.get = function(id, options, callback)
 {
 	// model.findById(...)[.populate(...)]
-}
+};
 
 /// Get documents by condition.
 ///   options  := { fields: 'f1 f2 ...', sort: <sort>, skip: <number>, limit: <number>, lean: <bool>, populate: <populate> }
@@ -217,7 +217,7 @@ ModelsRepository.prototype.read = function(condition, options, callback)
 {
 	// model.findOne(...)[.populate(...)] if take == 1
 	// model.find(...)[.populate(...)] if take > 1
-}
+};
 
 /// Populate one or more documents.
 ///   documents := document|array
@@ -226,7 +226,7 @@ ModelsRepository.prototype.read = function(condition, options, callback)
 ModelsRepository.prototype.populate = function(documents, options, callback)
 {
 	// model.populate(...)
-}
+};
 
 /// Create a new document.
 ///   object   := { f1: <any>, f2: <any>, ... }
@@ -236,7 +236,7 @@ ModelsRepository.prototype.create = function(object, callback)
 	// preupdate
 	// model.create(...)
 	// postupdate
-}
+};
 
 /// Update documents that match condition.
 ///   object   := { f1: <any>, f2: <any>, ... }
@@ -250,7 +250,7 @@ ModelsRepository.prototype.update = function(condition, object, options, callbac
 	// preupdate
 	// document.save()
 	// postupdate
-}
+};
 
 /// Save one or more documents.
 ///   documents := document|array
@@ -260,7 +260,7 @@ ModelsRepository.prototype.save = function(documents, callback)
 	// preupdate
 	// document.save()
 	// postupdate
-}
+};
 
 /// Delete one or more documents.
 ///   condition := condition
@@ -272,7 +272,7 @@ ModelsRepository.prototype.delete = function(condition, callback)
 	// pre remove
 	// model.remove(...)
 	// post remove
-}
+};
 
 ModelsRepository.prototype.preupdate = null;
 ModelsRepository.prototype.postupdate = null;
