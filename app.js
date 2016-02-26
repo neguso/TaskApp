@@ -1,4 +1,4 @@
-// start all services.
+// start all servicesx
 
 'use strict';
 
