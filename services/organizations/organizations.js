@@ -1,7 +1,7 @@
 // organizations service / implementation
 
 var database = require('../../modules/database'),
-		valuestore = require('../../modules/valuestore/index.js'),
+		valuestore = require('../../modules/valuestore'),
 		util = require('../../modules/util'),
 		errors = require('../errors.js');
 
